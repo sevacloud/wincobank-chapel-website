@@ -30,7 +30,7 @@ export default function WisdomPage() {
         </header>
 
         <div className="space-y-4 text-gray-600 leading-relaxed">
-          <blockquote className="border-l-4 border-indigo-200 pl-4 italic text-gray-700">
+          <blockquote className="border-l-4 border-chapel-200 pl-4 italic text-gray-700">
             &ldquo;So do not worry about tomorrow, for tomorrow will bring worries of its own.
             Today&apos;s trouble is enough for today.&rdquo; (Matthew 6:34)
           </blockquote>

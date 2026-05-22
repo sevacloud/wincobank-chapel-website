@@ -142,7 +142,7 @@ export default function BookRoomPage() {
           type={type}
           value={form[name]}
           onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
-          className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+          className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-chapel-400 ${
             errors[name] ? 'border-red-400' : 'border-gray-300'
           }`}
           aria-describedby={errors[name] ? `${name}-error` : undefined}
@@ -169,7 +169,7 @@ export default function BookRoomPage() {
         </p>
         <button
           onClick={() => router.push('/rooms')}
-          className="bg-indigo-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+          className="bg-chapel-400 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-chapel-500"
         >
           Back to Rooms
         </button>
@@ -190,10 +190,10 @@ export default function BookRoomPage() {
   return (
     <main className="max-w-lg mx-auto px-4 py-10">
       {/* Room summary */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-8">
+      <div className="bg-chapel-50 border border-chapel-100 rounded-lg p-4 mb-8">
         <h1 className="text-xl font-bold text-gray-900">{room.name}</h1>
         <p className="text-sm text-gray-600 mt-1">{room.description}</p>
-        <p className="text-sm font-medium text-indigo-700 mt-2">
+        <p className="text-sm font-medium text-chapel-500 mt-2">
           Deposit: £{(room.price_pence / 100).toFixed(2)} — Max capacity: {room.capacity}
         </p>
       </div>
@@ -244,7 +244,7 @@ export default function BookRoomPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="w-full bg-chapel-400 text-white py-3 rounded-md font-medium text-sm hover:bg-chapel-500 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-chapel-400"
         >
           {submitting ? 'Submitting…' : 'Submit Booking Request'}
         </button>

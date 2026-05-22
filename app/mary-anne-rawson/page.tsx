@@ -74,7 +74,7 @@ export default function MaryAnneRawsonPage() {
             href="https://upperwincobankchapel.wordpress.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-600 hover:text-indigo-800 underline"
+            className="text-chapel-400 hover:text-chapel-600 underline"
           >
             heritage blog
           </a>.

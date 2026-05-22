@@ -33,7 +33,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-4 justify-center">
             <Link
               href="/rooms"
-              className="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700 transition-colors"
+              className="bg-chapel-400 text-white px-6 py-3 rounded-md font-medium hover:bg-chapel-500 transition-colors"
             >
               Book a Room
             </Link>

@@ -86,7 +86,7 @@ export default function ContactPage() {
             required
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-chapel-500"
           />
         </div>
 
@@ -100,7 +100,7 @@ export default function ContactPage() {
             required
             value={form.email}
             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-chapel-500"
           />
         </div>
 
@@ -113,7 +113,7 @@ export default function ContactPage() {
             type="tel"
             value={form.phone}
             onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-chapel-500"
           />
         </div>
 
@@ -127,7 +127,7 @@ export default function ContactPage() {
             required
             value={form.subject}
             onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-chapel-500"
           />
         </div>
 
@@ -141,7 +141,7 @@ export default function ContactPage() {
             rows={5}
             value={form.message}
             onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-chapel-500 resize-none"
           />
         </div>
 
@@ -152,7 +152,7 @@ export default function ContactPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-indigo-600 text-white py-3 rounded-md font-medium text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className="w-full bg-chapel-400 text-white py-3 rounded-md font-medium text-sm hover:bg-chapel-500 disabled:opacity-50 transition-colors"
         >
           {submitting ? 'Sending…' : 'Send Message'}
         </button>

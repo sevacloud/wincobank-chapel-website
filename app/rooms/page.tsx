@@ -23,7 +23,7 @@ export default function RoomsPage() {
       </p>
       <p className="text-sm text-gray-500">
         In the meantime, please{' '}
-        <Link href="/contact" className="text-indigo-600 hover:text-indigo-800 underline">
+        <Link href="/contact" className="text-chapel-400 hover:text-chapel-600 underline">
           contact us
         </Link>{' '}
         or call <strong>07980 143776</strong> to arrange a booking.

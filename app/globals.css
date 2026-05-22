@@ -10,6 +10,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-chapel-50: #e6f7e9;
+  --color-chapel-100: #c2ebc8;
+  --color-chapel-200: #85d78f;
+  --color-chapel-300: #4bc35a;
+  --color-chapel-400: #0b9a21;
+  --color-chapel-500: #097b1a;
+  --color-chapel-600: #076214;
+  --color-chapel-700: #054a0f;
+  --color-chapel-800: #03310a;
+  --color-chapel-900: #021905;
 }
 
 @media (prefers-color-scheme: dark) {

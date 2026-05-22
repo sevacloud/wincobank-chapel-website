@@ -88,7 +88,7 @@ export default function FacilitiesPage() {
           </p>
         </section>
 
-        <section className="bg-indigo-50 border border-indigo-100 rounded-lg p-6">
+        <section className="bg-chapel-50 border border-chapel-100 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Hire Our Spaces</h2>
           <p className="text-gray-600 leading-relaxed mb-4">
             A modest rent is charged to help us cover the cost of heating and maintenance.
@@ -96,7 +96,7 @@ export default function FacilitiesPage() {
           </p>
           <Link
             href="/rooms"
-            className="inline-block bg-indigo-600 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+            className="inline-block bg-chapel-400 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-chapel-500 transition-colors"
           >
             View Rooms &amp; Book Online
           </Link>
