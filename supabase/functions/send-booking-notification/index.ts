@@ -115,7 +115,7 @@ function renderTemplate(type: string, booking: BookingWithRoom): EmailContent {
         <p>Unfortunately we're unable to approve your booking request at this time.</p>
         ${details}
         ${booking.admin_notes ? `<p><strong>Reason:</strong> ${booking.admin_notes}</p>` : ''}
-        <p>Please <a href="https://wincobankchapel.org/rooms">visit our rooms page</a>
+        <p>Please <a href="${Deno.env.get('SITE_URL') ?? 'https://wincobankchapel.org'}/rooms">visit our rooms page</a>
            to check availability or contact us to discuss alternative dates.</p>
         <p>— The Wincobank Chapel Team</p>
       `,
