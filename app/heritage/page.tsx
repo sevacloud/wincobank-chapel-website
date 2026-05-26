@@ -21,7 +21,7 @@ export default function HeritagePage() {
 
       <div className="flex items-center gap-4 bg-amber-50 border border-amber-100 rounded-lg p-4 mb-8">
         <Image
-          src="/media/posts/5/HLFHI_2747.jpg"
+          src="/images/heritage-lottery-fund.jpg"
           alt="Heritage Lottery Fund logo"
           width={113}
           height={70}
@@ -42,7 +42,7 @@ export default function HeritagePage() {
 
         <div className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-sm">
           <Image
-            src="/media/posts/5/Chapel-Door-sepia-2.jpg"
+            src="/images/chapel-door-historic.jpg"
             alt="An old picture of the Upper Wincobank Chapel"
             fill
             className="object-cover"
@@ -69,7 +69,7 @@ export default function HeritagePage() {
 
         <div className="relative aspect-[4/3] max-w-xs rounded-lg overflow-hidden shadow-sm">
           <Image
-            src="/media/posts/5/2013.03.23_Young-Researchers-_UWUC_RetroDay2_52KB_0149.jpg"
+            src="/images/young-researchers.jpg"
             alt="A Young Researcher at the chapel"
             fill
             className="object-cover"

@@ -58,7 +58,7 @@ export default function FacilitiesPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Kitchen</h2>
           <div className="relative aspect-video rounded-lg overflow-hidden shadow-sm mb-4 max-w-md">
             <Image
-              src="/media/posts/4/chapelKitchenWeb-09-4.jpg"
+              src="/images/chapel-kitchen.jpg"
               alt="The chapel kitchen"
               fill
               className="object-cover"

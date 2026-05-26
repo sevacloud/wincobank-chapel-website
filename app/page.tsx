@@ -15,7 +15,7 @@ export default function Home() {
       <section className="relative bg-gray-900 text-white">
         <div className="absolute inset-0 overflow-hidden">
           <Image
-            src="/media/posts/1/Front-of-Chapel-Colour.jpg"
+            src="/images/chapel-exterior.jpg"
             alt="Front view of Upper Wincobank Undenominational Chapel"
             fill
             className="object-cover opacity-40"
@@ -69,7 +69,7 @@ export default function Home() {
           </div>
           <div className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-lg">
             <Image
-              src="/media/posts/1/Chapel-inside-colour.jpg"
+              src="/images/chapel-interior.jpg"
               alt="Inside Upper Wincobank Chapel"
               fill
               className="object-cover"

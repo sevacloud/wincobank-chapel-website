@@ -21,7 +21,7 @@ export default function MaryAnneRawsonPage() {
 
       <div className="md:float-right md:ml-6 md:mb-4 mb-6">
         <Image
-          src="/media/posts/7/Mary-Anne-Rawson58kb.jpg"
+          src="/images/mary-anne-rawson.jpg"
           alt="Mary Anne Rawson"
           width={252}
           height={336}
@@ -50,7 +50,7 @@ export default function MaryAnneRawsonPage() {
 
         <div className="clear-both relative aspect-[4/3] rounded-lg overflow-hidden shadow-sm my-6">
           <Image
-            src="/media/posts/7/Anti-Slavery-Society-Convention-1840.jpg"
+            src="/images/anti-slavery-convention-1840.jpg"
             alt="Anti-Slavery Society Convention 1840 — Credit: National Portrait Gallery London"
             fill
             className="object-cover"

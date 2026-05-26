@@ -26,7 +26,7 @@ export default function NewsPage() {
       <article className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
         <div className="relative aspect-[16/9]">
           <Image
-            src="/media/posts/8/20200311_095522.jpg"
+            src="/images/old-school-house.jpg"
             alt="The Old School House"
             fill
             className="object-cover"
