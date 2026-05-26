@@ -101,6 +101,37 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Facebook Feed */}
+      <section className="py-16">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Latest from Facebook</h2>
+          <p className="text-gray-500 text-center text-sm mb-4">
+            Follow us for news, events and community updates.
+            <br />
+            If the feed isn&apos;t loading,{' '}
+            <a
+              href="https://www.facebook.com/UpperWincobankChapel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-chapel-400 hover:text-chapel-500 underline"
+            >
+              visit our Facebook page
+            </a>{' '}
+            for the latest updates.
+          </p>
+          <div className="flex justify-center">
+            <iframe
+              src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FUpperWincobankChapel&tabs=timeline&width=500&height=600&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false"
+              width={500}
+              height={600}
+              className="border-none overflow-hidden max-w-full"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              title="Wincobank Chapel Facebook feed"
+            />
+          </div>
+        </div>
+      </section>
     </>
   );
 }
