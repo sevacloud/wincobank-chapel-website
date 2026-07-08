@@ -102,6 +102,25 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Donations */}
+      <section className="bg-chapel-400 text-white py-16">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold mb-3">Support Our Chapel</h2>
+          <p className="text-white/90 leading-relaxed mb-6">
+            As an independent chapel run by volunteers, we rely on the generosity of our
+            community to keep the building open, maintained, and serving Wincobank. Whether
+            it&apos;s the Trust, the Chapel Building, or the Old School House restoration,
+            every gift makes a real difference.
+          </p>
+          <Link
+            href="/donate"
+            className="inline-block bg-white text-chapel-500 px-8 py-3 rounded-md font-semibold text-sm hover:bg-gray-100 transition-colors"
+          >
+            Make a Donation
+          </Link>
+        </div>
+      </section>
+
       {/* Facebook Feed */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4">

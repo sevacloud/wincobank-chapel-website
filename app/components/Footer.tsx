@@ -20,6 +20,11 @@ export default function Footer() {
                 ✉️ Contact Us
               </Link>
             </li>
+            <li>
+              <Link href="/donate" className="hover:text-white transition-colors">
+                💚 Make a Donation
+              </Link>
+            </li>
             <li>📞 07980 143776</li>
             <li>📍 132 Wincobank Avenue, S5 6BB</li>
           </ul>

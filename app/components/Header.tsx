@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { href: '/mary-anne-rawson', label: 'Mary Anne Rawson' },
   { href: '/news', label: 'News' },
   { href: '/wisdom', label: 'Wisdom' },
+  { href: '/donate', label: 'Donate' },
   { href: '/contact', label: 'Contact Us' },
 ];
 
