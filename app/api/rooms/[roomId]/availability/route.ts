@@ -9,10 +9,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BookingRepository } from '@/lib/repositories/booking-repository';
 
-const repo = new BookingRepository(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getRepo() {
+  return new BookingRepository(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function GET(
   req: NextRequest,
@@ -26,6 +28,6 @@ export async function GET(
     return NextResponse.json({ error: 'start and end query params required' }, { status: 400 });
   }
 
-  const overlaps = await repo.getOverlappingBookings(roomId, start, end);
+  const overlaps = await getRepo().getOverlappingBookings(roomId, start, end);
   return NextResponse.json({ available: overlaps.length === 0 });
 }

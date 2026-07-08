@@ -16,13 +16,16 @@ import { BookingRepository } from '@/lib/repositories/booking-repository';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-const repo = new BookingRepository(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role for server-side writes
-);
+function getRepo() {
+  return new BookingRepository(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role for server-side writes
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const repo = getRepo();
     const body = await req.json();
 
     // ── Input validation ────────────────────────────────────────────────

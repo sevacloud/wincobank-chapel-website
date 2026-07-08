@@ -13,16 +13,19 @@ import { canTransition, type BookingStatus } from '@/lib/state/booking-state-mac
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-const repo = new BookingRepository(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getRepo() {
+  return new BookingRepository(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const repo = getRepo();
     const { id } = await params;
 
     // ── Auth check: must be admin ───────────────────────────────────────
