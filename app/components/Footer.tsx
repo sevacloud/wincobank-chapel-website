@@ -66,8 +66,19 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-gray-800 py-4 text-center text-xs text-gray-500">
-        © {new Date().getFullYear()} Upper Wincobank Undenominational Chapel. All rights reserved.
+      <div className="border-t border-gray-800 py-4 text-center text-xs text-gray-500 space-y-1">
+        <p>© {new Date().getFullYear()} Upper Wincobank Undenominational Chapel. All rights reserved.</p>
+        <p>
+          Website created by{' '}
+          <a
+            href="https://sevacloud.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition-colors underline"
+          >
+            Seva Cloud
+          </a>
+        </p>
       </div>
     </footer>
   );
