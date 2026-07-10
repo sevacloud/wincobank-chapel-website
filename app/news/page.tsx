@@ -27,17 +27,17 @@ export default function NewsPage() {
         <div className="relative aspect-[16/9]">
           <Image
             src="/images/old-school-house.jpg"
-            alt="The Old School House"
+            alt="The Chapel House"
             fill
             className="object-cover"
           />
         </div>
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">The Old School House</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">The Chapel House</h2>
           <div className="space-y-3 text-gray-600 text-sm leading-relaxed">
             <p>
               We are delighted to have been awarded a significant grant from Veolia
-              Environmental Trust of £68,000 towards the renovation of the Old School House
+              Environmental Trust of £68,000 towards the renovation of the Chapel House
               so that it can be used for community purposes in future.
             </p>
             <p>

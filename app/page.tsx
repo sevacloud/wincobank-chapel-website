@@ -109,7 +109,7 @@ export default function Home() {
           <p className="text-white/90 leading-relaxed mb-6">
             As an independent chapel run by volunteers, we rely on the generosity of our
             community to keep the building open, maintained, and serving Wincobank. Whether
-            it&apos;s the Trust, the Chapel Building, or the Old School House restoration,
+            it&apos;s the Trust, the Chapel Building, or the Chapel House restoration,
             every gift makes a real difference.
           </p>
           <Link
@@ -118,6 +118,14 @@ export default function Home() {
           >
             Make a Donation
           </Link>
+          <Image
+            src="/images/wincobank-chapel-sketch.jpg"
+            alt="Sketch of Upper Wincobank Chapel"
+            width={1350}
+            height={1050}
+            className="w-full max-w-md h-auto mx-auto mt-10 rounded-lg shadow-lg"
+            sizes="(max-width: 448px) 100vw, 448px"
+          />
         </div>
       </section>
 
@@ -149,6 +157,36 @@ export default function Home() {
               title="Wincobank Chapel Facebook feed"
             />
           </div>
+        </div>
+      </section>
+
+      {/* Our Funders */}
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Our Funders</h2>
+          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+            We are deeply grateful to the trusts, foundations, and organisations whose
+            generous support makes our work possible. Thank you for helping us care for the
+            chapel and serve our community.
+          </p>
+          {/* Wide logo strip for larger screens */}
+          <Image
+            src="/images/wincobank-chapel-school-house-funders-logos-wide.jpg"
+            alt="Funders of Wincobank Chapel: Veolia Environmental Trust, The Clothworkers Foundation, The J.G. Greaves Charitable Trusts, Northern Powerhouse, European Regional Development Fund, Key Fund, Sheffield City Council, Sheffield Town Trust, Sheffield Church Burgess Trust, Lottery Fund"
+            width={1582}
+            height={385}
+            className="hidden sm:block w-full h-auto"
+            sizes="896px"
+          />
+          {/* Thin logo stack for mobile screens */}
+          <Image
+            src="/images/wincobank-chapel-school-house-funders-logos-thin.jpg"
+            alt="Funders of Wincobank Chapel: Veolia Environmental Trust, The Clothworkers Foundation, The J.G. Greaves Charitable Trusts, Northern Powerhouse, European Regional Development Fund, Key Fund, Sheffield City Council, Sheffield Town Trust, Sheffield Church Burgess Trust, Lottery Fund"
+            width={503}
+            height={1138}
+            className="block sm:hidden w-full max-w-xs mx-auto h-auto"
+            sizes="(max-width: 640px) 100vw, 320px"
+          />
         </div>
       </section>
     </>

@@ -12,6 +12,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { DESIGNATIONS } from '@/lib/donations';
 
@@ -157,6 +158,15 @@ function DonateForm() {
           Payments are processed securely by Stripe. We never see or store your card details.
         </p>
       </form>
+
+      <Image
+        src="/images/wincobank-chapel-sketch.jpg"
+        alt="Sketch of Upper Wincobank Chapel"
+        width={1350}
+        height={1050}
+        className="w-full max-w-md h-auto mx-auto mt-10 rounded-lg shadow-lg"
+        sizes="(max-width: 448px) 100vw, 448px"
+      />
     </div>
   );
 }
