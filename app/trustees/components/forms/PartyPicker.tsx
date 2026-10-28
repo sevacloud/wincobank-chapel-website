@@ -62,19 +62,19 @@ export default function PartyPicker({ label, contacts }: { label: 'supplier' | '
           </div>
           <div>
             <label htmlFor="new_email" className={labelClass}>Email</label>
-            <input id="new_email" name="new_email" type="email" maxLength={120} autoComplete="off" className={inputClass} />
+            <input id="new_email" name="new_email" type="email" maxLength={100} autoComplete="off" className={inputClass} />
           </div>
           <div>
             <label htmlFor="new_phone" className={labelClass}>Phone</label>
-            <input id="new_phone" name="new_phone" type="tel" maxLength={30} autoComplete="off" className={inputClass} />
+            <input id="new_phone" name="new_phone" type="tel" maxLength={20} autoComplete="off" className={inputClass} />
           </div>
           <div>
             <label htmlFor="new_address1" className={labelClass}>Address line 1</label>
-            <input id="new_address1" name="new_address1" maxLength={100} autoComplete="off" className={inputClass} />
+            <input id="new_address1" name="new_address1" maxLength={75} autoComplete="off" className={inputClass} />
           </div>
           <div>
             <label htmlFor="new_address2" className={labelClass}>Address line 2</label>
-            <input id="new_address2" name="new_address2" maxLength={100} autoComplete="off" className={inputClass} />
+            <input id="new_address2" name="new_address2" maxLength={75} autoComplete="off" className={inputClass} />
           </div>
           <div>
             <label htmlFor="new_town" className={labelClass}>Town / city</label>

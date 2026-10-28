@@ -211,6 +211,9 @@ createServer(async (req, res) => {
       if (path === 'purchases') {
         const supplier = suppliers.find((s) => s.id === body.supplier_id);
         if (!supplier) return error(res, 400, 'Unknown supplier_id');
+        // Mirror QuickFile's field limits so local tests catch overruns.
+        if ((body.description ?? '').length > 35) return error(res, 400, 'The description must be less than 35 characters long.');
+        if ((body.supplier_reference ?? '').length > 30) return error(res, 400, 'The supplier_reference must be less than 30 characters long.');
         const gross = body.item_lines.reduce((s, l) => s + l.sub_total, 0);
         const p = { id: nextId++, receipt_number: `P${nextId}`, receipt_date: body.receipt_date, supplier_id: supplier.id, supplier_name: supplier.company_name, description: body.description, status: body.payment ? 'paid' : 'unpaid', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code };
         purchases.push(p);

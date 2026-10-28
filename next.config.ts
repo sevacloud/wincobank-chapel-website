@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '5mb',
     },
   },
+  async redirects() {
+    return [
+      // Online booking isn't live yet: send old booking links to the enquiry
+      // form with the room preselected. Temporary, so it can be removed when
+      // the /rooms/[roomId]/book flow is switched back on.
+      { source: '/rooms/:roomId/book', destination: '/rooms?room=:roomId', permanent: false },
+    ];
+  },
   async headers() {
     // Trustee portal: never framed (clickjacking on admin actions), no MIME
     // sniffing, no referrer leaking portal URLs to other sites.

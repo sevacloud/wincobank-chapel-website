@@ -44,8 +44,8 @@ export default async function NewExpensePage() {
           <fieldset className="grid gap-4 sm:grid-cols-2">
             <legend className="text-sm font-semibold text-gray-900 mb-2">Details</legend>
             <div className="sm:col-span-2">
-              <label htmlFor="description" className={labelClass}>What was it for? *</label>
-              <input id="description" name="description" required minLength={2} maxLength={150} placeholder="e.g. Cleaning supplies for the hall" className={inputClass} />
+              <label htmlFor="description" className={labelClass}>What was it for? * <span className="font-normal text-gray-500">(max 35 characters — add detail in the lines below)</span></label>
+              <input id="description" name="description" required minLength={2} maxLength={35} placeholder="e.g. Hall cleaning supplies" className={inputClass} />
             </div>
             <div>
               <label htmlFor="date" className={labelClass}>Receipt date *</label>
@@ -53,14 +53,14 @@ export default async function NewExpensePage() {
             </div>
             <div>
               <label htmlFor="reference" className={labelClass}>Receipt / invoice number</label>
-              <input id="reference" name="reference" maxLength={50} className={inputClass} />
+              <input id="reference" name="reference" maxLength={30} className={inputClass} />
             </div>
             <div>
               <label htmlFor="paid_from" className={labelClass}>How was it paid? *</label>
               <select id="paid_from" name="paid_from" required defaultValue="personal" className={inputClass}>
                 <option value="personal">I paid personally — please reimburse me</option>
                 {options.bankAccounts.map((a) => (
-                  <option key={a.nominalCode} value={a.nominalCode}>Paid from chapel account: {a.name}</option>
+                  <option key={a.nominalCode} value={a.nominalCode}>Paid from: {a.name}</option>
                 ))}
               </select>
             </div>

@@ -272,11 +272,16 @@ export async function submitExpense(input: ExpenseInput, by: Submitter): Promise
     supplier_id: supplier.id,
     receipt_date: input.receiptDate,
     currency: 'GBP',
-    description: `${input.description} — submitted by ${by.name}${paidPersonally ? ' (paid personally, reimbursement due)' : ''}`,
-    supplier_reference: orUndefined(input.reference),
-    item_lines: input.lines.map((l) => ({
+    // QuickFile caps the purchase description at 35 characters, so who
+    // submitted it (and whether they're owed money) goes on the first line,
+    // whose description has no practical limit.
+    description: input.description.slice(0, 35),
+    supplier_reference: orUndefined(input.reference.slice(0, 30)),
+    item_lines: input.lines.map((l, i) => ({
       nominal_code: l.nominalCode,
-      description: l.description,
+      description: i === 0
+        ? `${l.description} — submitted by ${by.name}${paidPersonally ? '; paid personally, reimbursement due' : ''}`
+        : l.description,
       sub_total: l.amount,
       vat_rate: 0,
     })),

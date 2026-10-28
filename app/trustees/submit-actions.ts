@@ -61,7 +61,7 @@ function parseMoney(raw: FormDataEntryValue | null, label: string): number {
 
 function parseParty(fd: FormData, existing: FormOptions['suppliers'], label: string): PartyInput {
   if (fd.get('party_mode') === 'new') {
-    const email = text(fd, 'new_email', 120);
+    const email = text(fd, 'new_email', 100);
     if (email && !EMAIL.test(email)) throw new ValidationError(`New ${label} email address doesn't look right.`);
     return {
       kind: 'new',
@@ -70,9 +70,9 @@ function parseParty(fd: FormData, existing: FormOptions['suppliers'], label: str
         firstName: text(fd, 'new_first', 50),
         surname: text(fd, 'new_surname', 50),
         email,
-        telephone: text(fd, 'new_phone', 30),
-        addressLine1: text(fd, 'new_address1', 100),
-        addressLine2: text(fd, 'new_address2', 100),
+        telephone: text(fd, 'new_phone', 20),
+        addressLine1: text(fd, 'new_address1', 75),
+        addressLine2: text(fd, 'new_address2', 75),
         town: text(fd, 'new_town', 60),
         postCode: text(fd, 'new_postcode', 10).toUpperCase(),
       },
@@ -147,8 +147,9 @@ export async function submitExpenseAction(_prev: SubmitState, fd: FormData): Pro
     const result = await submitExpense({
       supplier: parseParty(fd, options.suppliers, 'supplier'),
       receiptDate: requireDate(fd, 'date', 'Receipt date', { notFuture: true }),
-      reference: text(fd, 'reference', 50),
-      description: requireText(fd, 'description', 'Description', { min: 2, max: 150 }),
+      // QuickFile limits: supplier reference 30, purchase description 35.
+      reference: text(fd, 'reference', 30),
+      description: requireText(fd, 'description', 'Description', { min: 2, max: 35 }),
       lines: parseLines(fd, options.purchaseCodes.map((c) => c.code), false),
       projectTag: parseProjectTag(fd, options.projectTags),
       paidFromNominal,

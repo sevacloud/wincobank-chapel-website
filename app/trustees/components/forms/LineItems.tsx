@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { NominalCode } from '@/lib/quickfile/submissions';
 import { formatGBP } from '@/lib/quickfile/format';
 import { inputClass, labelClass, secondaryButtonClass } from '../styles';
@@ -18,6 +18,8 @@ export default function LineItems({ codes, withQuantity, defaultCode }: {
 }) {
   const [lines, setLines] = useState<Line[]>([{ key: 0, amount: '', qty: '1' }]);
   const update = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  // Alphabetical by name, so the native select's type-to-jump finds "Cleaning" by typing "cle".
+  const sorted = useMemo(() => [...codes].sort((a, b) => a.name.localeCompare(b.name, 'en-GB')), [codes]);
   const total = lines.reduce((s, l) => s + (Number(l.amount) || 0) * (withQuantity ? Number(l.qty) || 0 : 1), 0);
 
   return (
@@ -34,7 +36,7 @@ export default function LineItems({ codes, withQuantity, defaultCode }: {
               <label htmlFor={`code-${l.key}`} className={labelClass}>Category</label>
               <select id={`code-${l.key}`} name="line_nominal" required defaultValue={defaultCode ?? ''} className={inputClass}>
                 <option value="" disabled>Choose…</option>
-                {codes.map((c) => <option key={c.code} value={c.code}>{c.code} · {c.name}</option>)}
+                {sorted.map((c) => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
               </select>
             </div>
             {withQuantity && (
