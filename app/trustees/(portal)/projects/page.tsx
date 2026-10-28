@@ -105,7 +105,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
   try {
     projects = await getProjects(period.from, period.to);
   } catch (e) {
-    return (<><PageHeading title="Projects" /><DateRangeForm period={period} /><ErrorBox message={errorMessage(e)} /></>);
+    return (<><PageHeading title="Projects" period={period} /><DateRangeForm period={period} /><ErrorBox message={errorMessage(e)} /></>);
   }
 
   const income = projects.reduce((s, p) => s + p.income, 0);
@@ -114,7 +114,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
 
   return (
     <>
-      <PageHeading title="Projects">Income and spend for each QuickFile project tag.</PageHeading>
+      <PageHeading title="Projects" period={period}>Income and spend for each QuickFile project tag.</PageHeading>
       <DateRangeForm period={period} />
 
       {projects.length === 0 ? (

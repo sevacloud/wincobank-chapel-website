@@ -30,7 +30,7 @@ export default async function UtilitiesPage({ searchParams }: { searchParams: Se
   try {
     data = await getUtilities(period.from, period.to);
   } catch (e) {
-    return (<><PageHeading title="Utilities" /><DateRangeForm period={period} /><ErrorBox message={errorMessage(e)} /></>);
+    return (<><PageHeading title="Utilities" period={period} /><DateRangeForm period={period} /><ErrorBox message={errorMessage(e)} /></>);
   }
 
   const months = monthsBetween(period.from, period.to);
@@ -41,7 +41,7 @@ export default async function UtilitiesPage({ searchParams }: { searchParams: Se
 
   return (
     <>
-      <PageHeading title="Utilities">Monthly utility costs, from purchases tagged in QuickFile.</PageHeading>
+      <PageHeading title="Utilities" period={period}>Monthly utility costs, from purchases tagged in QuickFile.</PageHeading>
       <DateRangeForm period={period} />
 
       {grand === 0 ? (

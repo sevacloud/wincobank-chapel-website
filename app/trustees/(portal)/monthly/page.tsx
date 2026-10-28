@@ -27,7 +27,7 @@ export default async function MonthlyPage({ searchParams }: { searchParams: Sear
   try {
     results = await getMonthlySummary(period.from, period.to);
   } catch (e) {
-    return (<><PageHeading title="Monthly Summary" /><DateRangeForm period={period} /><ErrorBox message={errorMessage(e)} /></>);
+    return (<><PageHeading title="Monthly Summary" period={period} /><DateRangeForm period={period} /><ErrorBox message={errorMessage(e)} /></>);
   }
 
   // Palette slot is fixed by position in the full account list.
@@ -49,7 +49,7 @@ export default async function MonthlyPage({ searchParams }: { searchParams: Sear
 
   return (
     <>
-      <PageHeading title="Monthly Summary">Income and spend by month from bank transactions.</PageHeading>
+      <PageHeading title="Monthly Summary" period={period}>Income and spend by month from bank transactions.</PageHeading>
       <DateRangeForm period={period} />
 
       {results.length > 1 && (

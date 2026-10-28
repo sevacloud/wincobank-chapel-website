@@ -17,18 +17,19 @@ export const metadata = { title: '3-Year Comparison' };
 
 export default async function YearComparisonPage({ searchParams }: { searchParams: SearchParams }) {
   await requireTrustee();
-  const { fy } = await resolvePeriod(searchParams);
+  const period = await resolvePeriod(searchParams);
+  const { fy } = period;
 
   let years: YearFigures[];
   try {
     years = await getYearComparison(fy);
   } catch (e) {
-    return (<><PageHeading title="3-Year Comparison" /><ErrorBox message={errorMessage(e)} /></>);
+    return (<><PageHeading title="3-Year Comparison" period={period} /><ErrorBox message={errorMessage(e)} /></>);
   }
 
   return (
     <>
-      <PageHeading title="3-Year Comparison">
+      <PageHeading title="3-Year Comparison" period={period}>
         The three financial years before {fy.label}.
       </PageHeading>
       <Card title="Income & Expenditure Comparison">

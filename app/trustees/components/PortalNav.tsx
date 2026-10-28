@@ -17,9 +17,6 @@ const SUBMIT = [
   { href: '/trustees/invoices/new', label: 'Raise an Invoice' },
 ];
 
-/** Report pages that honour the ?fy= period selector. */
-export const PERIOD_PAGES = REPORTS.map((r) => r.href);
-
 function NavGroup({ title, items, query }: { title: string; items: typeof REPORTS; query: string }) {
   const pathname = usePathname();
   return (

@@ -2,20 +2,16 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
-import { PERIOD_PAGES } from './PortalNav';
 
 /** Financial-year selector; writes ?fy= so the period survives reloads and links. */
-export default function PeriodSelect({ years }: { years: string[] }) {
+export default function PeriodSelect({ years, current }: { years: string[]; current: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
 
-  if (!PERIOD_PAGES.includes(pathname)) return null;
-  const current = params.get('fy') ?? years[0];
-
   return (
-    <div className="flex items-center justify-end gap-2 mb-4">
+    <div className="flex items-center gap-2">
       <label htmlFor="fy" className="text-sm text-gray-600">Financial year</label>
       <select
         id="fy"

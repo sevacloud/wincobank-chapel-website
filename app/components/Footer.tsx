@@ -25,6 +25,11 @@ export default function Footer() {
                 💚 Make a Donation
               </Link>
             </li>
+            <li>
+              <Link href="/trustees/login" className="hover:text-white transition-colors">
+                🔒 Trustee Login
+              </Link>
+            </li>
             <li>📞 07980 143776</li>
             <li>📍 132 Wincobank Avenue, S5 6BB</li>
           </ul>

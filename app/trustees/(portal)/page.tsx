@@ -29,7 +29,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Sea
   try {
     rows = await getDashboard(fy, isCurrentFY);
   } catch (e) {
-    return (<><PageHeading title="Overview" /><ErrorBox message={errorMessage(e)} /></>);
+    return (<><PageHeading title="Overview" period={period} /><ErrorBox message={errorMessage(e)} /></>);
   }
 
   const ok = rows.filter((r) => !r.error);
@@ -47,7 +47,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Sea
 
   return (
     <>
-      <PageHeading title="Overview">Financial year {fy.label} · {fy.from} to {fy.to}</PageHeading>
+      <PageHeading title="Overview" period={period}>Financial year {fy.label} · {fy.from} to {fy.to}</PageHeading>
 
       <WarningList items={rows.filter((r) => r.error).map((r) => ({ label: r.account.name, message: r.error! }))} />
 

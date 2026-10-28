@@ -3,7 +3,9 @@
  * Server-safe (no hooks).
  */
 
+import { Suspense } from 'react';
 import { cardClass, cardTitleClass, inputClass, primaryButtonClass } from './styles';
+import PeriodSelect from './PeriodSelect';
 import { financialYears, isIsoDate, resolveFinancialYear, type FinancialYear } from '@/lib/quickfile/financial-year';
 
 export type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -38,11 +40,19 @@ export function Card({ title, aside, children }: { title?: React.ReactNode; asid
   );
 }
 
-export function PageHeading({ title, children }: { title: string; children?: React.ReactNode }) {
+/** Page title, optional subtitle, and (on report pages) the financial-year selector floated right. */
+export function PageHeading({ title, period, children }: { title: string; period?: Period; children?: React.ReactNode }) {
   return (
-    <div className="mb-6">
-      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-      {children && <p className="text-sm text-gray-600 mt-1">{children}</p>}
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        {children && <p className="text-sm text-gray-600 mt-1">{children}</p>}
+      </div>
+      {period && (
+        <Suspense>
+          <PeriodSelect years={financialYears().map((y) => y.label)} current={period.fy.label} />
+        </Suspense>
+      )}
     </div>
   );
 }

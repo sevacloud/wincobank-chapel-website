@@ -19,19 +19,20 @@ export const metadata = { title: 'Annual Statement' };
 
 export default async function AnnualStatementPage({ searchParams }: { searchParams: SearchParams }) {
   await requireTrustee();
-  const { fy } = await resolvePeriod(searchParams);
+  const period = await resolvePeriod(searchParams);
+  const { fy } = period;
 
   let years: YearFigures[];
   try {
     const { current, prior } = await getAnnualStatement(fy);
     years = [current, prior];
   } catch (e) {
-    return (<><PageHeading title="Annual Statement" /><ErrorBox message={errorMessage(e)} /></>);
+    return (<><PageHeading title="Annual Statement" period={period} /><ErrorBox message={errorMessage(e)} /></>);
   }
 
   return (
     <>
-      <PageHeading title="Annual Statement">
+      <PageHeading title="Annual Statement" period={period}>
         Statement of Financial Activities (Charity SORP) · {fy.from} to {fy.to}
       </PageHeading>
       <Card title="Statement of Financial Activities" aside={fy.label}>
