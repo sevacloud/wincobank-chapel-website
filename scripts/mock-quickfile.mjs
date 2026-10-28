@@ -1,0 +1,239 @@
+/**
+ * Local mock of the QuickFile v2 REST API, for testing the trustee portal
+ * without touching the chapel's real books.
+ * © Liamarjit Bhogal (© Seva Cloud 2026)
+ *
+ *   node scripts/mock-quickfile.mjs            # listens on :4010
+ *
+ * then in .env.local:
+ *   QUICKFILE_API_URL=http://localhost:4010/
+ *   QUICKFILE_API_TOKEN=mock
+ *
+ * Serves sample data for the last few financial years and keeps anything
+ * the portal creates (suppliers, clients, purchases, invoices, documents)
+ * in memory, so submissions show up in the reports. Record-level uploads of
+ * .txt files are rejected on purpose, to exercise the Document Management
+ * fallback. Every write is logged to the console.
+ */
+
+import { createServer } from 'node:http';
+
+const PORT = Number(process.env.PORT ?? 4010);
+
+// ---------------------------------------------------------------------------
+// Sample data
+// ---------------------------------------------------------------------------
+
+const banks = [
+  { id: 101, nominal_code: 1200, name: 'Current Account', bank_type: 'current' },
+  { id: 102, nominal_code: 1210, name: 'Building Fund Reserve', bank_type: 'reserve' },
+];
+
+const nominals = [
+  [4000, 'Room Hire Income', false, true], [4100, 'Donations', false, true], [4200, 'Grants', false, true],
+  [5000, 'Building Repairs', true, false], [7200, 'Gas', true, false], [7201, 'Electricity', true, false],
+  [7300, 'Water', true, false], [7500, 'Cleaning', true, false], [7600, 'Insurance', true, false],
+  [8200, 'Sundry Expenses', true, false],
+].map(([nominal_code, name, is_purchase_code, is_sales_code]) => ({ nominal_code, name, is_purchase_code, is_sales_code }));
+
+const suppliers = [
+  { id: 1, company_name: 'British Gas' }, { id: 2, company_name: 'Yorkshire Water' },
+  { id: 3, company_name: 'Sheffield Roofing Ltd' }, { id: 4, company_name: 'Ecclesiastical Insurance' },
+];
+const clients = [{ id: 1, company_name: 'Wincobank Toddler Group' }, { id: 2, company_name: 'Sheffield Choir Society' }];
+const tags = ['Roof Repair', 'Gas', 'Electricity', 'Water', 'Insurance', 'Community Lunch'];
+
+const pad = (n) => String(n).padStart(2, '0');
+const months = [];
+for (let y = 2022; y <= 2026; y++) for (let m = 1; m <= 12; m++) months.push(`${y}-${pad(m)}`);
+
+// Deterministic pseudo-random so figures are stable between restarts.
+let seed = 42;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const money = (lo, hi) => Math.round((lo + rand() * (hi - lo)) * 100) / 100;
+
+let nextId = 1000;
+const transactions = { 101: [], 102: [] };
+const purchases = [];
+const invoices = [];
+const documents = [];
+
+for (const ym of months) {
+  if (`${ym}-01` > new Date().toISOString().slice(0, 10)) break;
+  const supplierFor = { Gas: 1, Water: 2, Insurance: 4, Electricity: 1 };
+  for (const [tag, code, lo, hi] of [['Gas', 7200, 60, 220], ['Electricity', 7201, 40, 120], ['Water', 7300, 15, 40]]) {
+    const gross = money(lo, hi);
+    purchases.push({ id: nextId++, receipt_number: `P${nextId}`, receipt_date: `${ym}-05`, supplier_id: supplierFor[tag], supplier_name: suppliers.find((s) => s.id === supplierFor[tag]).company_name, description: `${tag} bill`, status: 'paid', net_total: gross, gross_total: gross, tags: [tag], code });
+    transactions[101].push({ id: nextId++, date: `${ym}-06`, reference: `${tag} DD`, notes: '', amount: -gross });
+  }
+  const hire = money(150, 600);
+  invoices.push({ id: nextId++, invoice_number: `INV${nextId}`, issue_date: `${ym}-10`, client_company_name: 'Wincobank Toddler Group', description: 'Hall hire', status: 'paid', net_total: hire, gross_total: hire, tags: ['Community Lunch'], code: 4000 });
+  transactions[101].push({ id: nextId++, date: `${ym}-12`, reference: 'Hall hire', notes: '', amount: hire });
+  transactions[101].push({ id: nextId++, date: `${ym}-20`, reference: 'Sunday collection', notes: '', amount: money(200, 450) });
+  transactions[102].push({ id: nextId++, date: `${ym}-28`, reference: 'Standing order to reserve', notes: '', amount: 100 });
+}
+// One-off roof job with a project tag.
+purchases.push({ id: nextId++, receipt_number: 'P-ROOF', receipt_date: '2025-09-15', supplier_id: 3, supplier_name: 'Sheffield Roofing Ltd', description: 'Slate repairs', status: 'unpaid', net_total: 4250, gross_total: 4250, tags: ['Roof Repair'], code: 5000 });
+
+const OPENING = { 101: 3500, 102: 12000 };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const inRange = (d, q) => (!q.date_from || d >= q.date_from) && (!q.date_to || d <= q.date_to);
+
+function page(rows, q) {
+  const offset = Number(q.offset ?? 0);
+  const limit = Number(q.limit ?? 100);
+  return { data: rows.slice(offset, offset + limit), paging: { total: rows.length, offset, limit } };
+}
+
+function balanceAt(bankId, to) {
+  const txns = transactions[bankId].filter((t) => !to || t.date <= to);
+  return Math.round((OPENING[bankId] + txns.reduce((s, t) => s + t.amount, 0)) * 100) / 100;
+}
+
+function withRunningBalance(bankId) {
+  let bal = OPENING[bankId];
+  return [...transactions[bankId]].sort((a, b) => a.date.localeCompare(b.date)).map((t) => ({ ...t, balance: Math.round((bal += t.amount) * 100) / 100 }));
+}
+
+function profitAndLoss(q) {
+  const sum = (rows, dateKey) => {
+    const byCode = new Map();
+    for (const r of rows) if (inRange(r[dateKey], q)) byCode.set(r.code, (byCode.get(r.code) ?? 0) + r.gross_total);
+    return [...byCode].map(([code, amount]) => ({ nominal_code: code, nominal_code_name: nominals.find((n) => n.nominal_code === code)?.name ?? String(code), amount: Math.round(amount * 100) / 100 }));
+  };
+  return { turnovers: sum(invoices, 'issue_date'), less_cost_of_sales: [], less_expenses: sum(purchases, 'receipt_date'), totals: {} };
+}
+
+const error = (res, status, message) => send(res, status, { error: { type: 'mock', code: status, message } });
+
+function send(res, status, body) {
+  res.writeHead(status, { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': '4999' });
+  res.end(JSON.stringify(body));
+}
+
+async function readBody(req) {
+  const chunks = [];
+  for await (const c of req) chunks.push(c);
+  return Buffer.concat(chunks);
+}
+
+/** Minimal multipart parse — enough to read field values and file names. */
+function parseMultipart(buf, contentType) {
+  const boundary = contentType.match(/boundary=(.+)$/)?.[1];
+  const fields = {};
+  const files = [];
+  for (const part of buf.toString('latin1').split(`--${boundary}`)) {
+    const name = part.match(/name="([^"]+)"/)?.[1];
+    if (!name) continue;
+    const filename = part.match(/filename="([^"]*)"/)?.[1];
+    const value = part.split('\r\n\r\n').slice(1).join('\r\n\r\n').replace(/\r\n$/, '');
+    if (filename !== undefined) files.push({ field: name, filename, bytes: Buffer.byteLength(value, 'latin1') });
+    else fields[name] = value;
+  }
+  return { fields, files };
+}
+
+// ---------------------------------------------------------------------------
+// Routes
+// ---------------------------------------------------------------------------
+
+createServer(async (req, res) => {
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+  const q = Object.fromEntries(url.searchParams);
+  const path = url.pathname.replace(/^\/+|\/+$/g, '');
+  const m = (re) => path.match(re);
+
+  if (!req.headers.authorization?.startsWith('Bearer ')) return error(res, 401, 'Missing bearer token');
+
+  try {
+    if (req.method === 'GET') {
+      if (path === 'bank_accounts') return send(res, 200, { data: banks });
+      let r;
+      if ((r = m(/^bank_accounts\/(\d+)\/balance$/))) return send(res, 200, { balance: balanceAt(Number(r[1])) });
+      if ((r = m(/^bank_accounts\/(\d+)\/transactions$/))) {
+        const rows = withRunningBalance(Number(r[1])).filter((t) => inRange(t.date, q)).reverse();
+        return send(res, 200, page(rows, q));
+      }
+      if (path === 'reports/profit-and-loss') return send(res, 200, profitAndLoss(q));
+      if (path === 'reports/balance-sheet') {
+        return send(res, 200, { current_assets: banks.map((b) => ({ nominal_code: b.nominal_code, amount: balanceAt(b.id, q.date_to) })) });
+      }
+      if (path === 'projects') return send(res, 200, tags);
+      if (path === 'invoices') {
+        return send(res, 200, page(invoices.filter((i) => inRange(i.issue_date, q) && (!q.tag_name || i.tags.includes(q.tag_name))), q));
+      }
+      if (path === 'purchases') {
+        return send(res, 200, page(purchases.filter((p) => inRange(p.receipt_date, q) && (!q.tag_name || p.tags.includes(q.tag_name))), q));
+      }
+      if (path === 'ledgers/nominals') return send(res, 200, nominals);
+      if (path === 'suppliers') return send(res, 200, page(suppliers, q));
+      if (path === 'clients') return send(res, 200, page(clients, q));
+    }
+
+    if (req.method === 'POST') {
+      const raw = await readBody(req);
+      const ct = req.headers['content-type'] ?? '';
+
+      if (ct.startsWith('multipart/form-data')) {
+        const { fields, files } = parseMultipart(raw, ct);
+        const file = files[0];
+        console.log(`POST /${path}`, fields, file && `${file.filename} (${file.bytes} bytes)`);
+        if (!file) return error(res, 400, 'file is required');
+        if (path !== 'documents/general' && /\.txt$/i.test(file.filename)) {
+          return error(res, 400, 'Unsupported file type for attachment');
+        }
+        const doc = { id: nextId++, path, ...fields, filename: file.filename };
+        documents.push(doc);
+        return send(res, 200, { id: doc.id, path: `/docs/${doc.id}` });
+      }
+
+      const body = JSON.parse(raw.toString('utf8') || '{}');
+      console.log(`POST /${path}`, JSON.stringify(body, null, 2));
+
+      if (path === 'suppliers') {
+        const s = { id: nextId++, company_name: body.company_name };
+        suppliers.push(s);
+        return send(res, 200, s);
+      }
+      if (path === 'clients') {
+        const c = { id: nextId++, company_name: body.company_name };
+        clients.push(c);
+        return send(res, 200, c);
+      }
+      if (m(/^clients\/\d+\/contacts$/)) {
+        if (!body.first_name || !body.surname || !body.email) return error(res, 400, 'first_name, surname and email are required');
+        return send(res, 200, { id: nextId++ });
+      }
+      if (path === 'purchases') {
+        const supplier = suppliers.find((s) => s.id === body.supplier_id);
+        if (!supplier) return error(res, 400, 'Unknown supplier_id');
+        const gross = body.item_lines.reduce((s, l) => s + l.sub_total, 0);
+        const p = { id: nextId++, receipt_number: `P${nextId}`, receipt_date: body.receipt_date, supplier_id: supplier.id, supplier_name: supplier.company_name, description: body.description, status: body.payment ? 'paid' : 'unpaid', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code };
+        purchases.push(p);
+        if (body.payment) {
+          const bank = banks.find((b) => b.nominal_code === body.payment.nominal_code);
+          transactions[bank.id].push({ id: nextId++, date: body.payment.date, reference: `Purchase ${p.receipt_number}`, notes: '', amount: -body.payment.amount });
+        }
+        return send(res, 200, p);
+      }
+      if (path === 'invoices') {
+        const client = clients.find((c) => c.id === body.client_id);
+        if (!client) return error(res, 400, 'Unknown client_id');
+        if (body.description && (body.description.length < 2 || body.description.length > 35)) return error(res, 400, 'description must be 2-35 characters');
+        const gross = body.item_lines.reduce((s, l) => s + l.unit_cost * l.qty, 0);
+        const i = { id: nextId++, invoice_number: `INV${nextId}`, issue_date: body.issue_date, client_company_name: client.company_name, description: body.description, status: 'draft', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code };
+        invoices.push(i);
+        return send(res, 200, i);
+      }
+    }
+
+    return error(res, 404, `Mock has no handler for ${req.method} /${path}`);
+  } catch (e) {
+    console.error(e);
+    return error(res, 500, String(e));
+  }
+}).listen(PORT, () => console.log(`Mock QuickFile API on http://localhost:${PORT}/`));
