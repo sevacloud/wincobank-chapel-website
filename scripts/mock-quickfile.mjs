@@ -25,8 +25,10 @@ const PORT = Number(process.env.PORT ?? 4010);
 // ---------------------------------------------------------------------------
 
 const banks = [
-  { id: 101, nominal_code: 1200, name: 'Current Account', bank_type: 'current' },
+  { id: 101, nominal_code: 1200, name: 'Chapel (Natwest)', bank_type: 'current' },
   { id: 102, nominal_code: 1210, name: 'Building Fund Reserve', bank_type: 'reserve' },
+  { id: 103, nominal_code: 1220, name: 'Trust (HSBC)', bank_type: 'current' },
+  { id: 104, nominal_code: 1230, name: 'House (Lloyds)', bank_type: 'current' },
 ];
 
 const nominals = [
@@ -34,6 +36,9 @@ const nominals = [
   [5000, 'Building Repairs', true, false], [7200, 'Gas', true, false], [7201, 'Electricity', true, false],
   [7300, 'Water', true, false], [7500, 'Cleaning', true, false], [7600, 'Insurance', true, false],
   [8200, 'Sundry Expenses', true, false],
+  [5100, 'Trust Grants Paid', true, false], [5110, 'Trust Admin', true, false],
+  [5200, 'House Repairs', true, false], [5210, 'House Utilities', true, false],
+  [5300, 'Chapel Repairs', true, false], [5310, 'Chapel Cleaning', true, false],
 ].map(([nominal_code, name, is_purchase_code, is_sales_code]) => ({ nominal_code, name, is_purchase_code, is_sales_code }));
 
 const suppliers = [
@@ -58,7 +63,7 @@ const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const money = (lo, hi) => Math.round((lo + rand() * (hi - lo)) * 100) / 100;
 
 let nextId = 1000;
-const transactions = { 101: [], 102: [] };
+const transactions = { 101: [], 102: [], 103: [], 104: [] };
 const purchases = [];
 const invoices = [];
 const documents = [];

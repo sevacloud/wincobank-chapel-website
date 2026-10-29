@@ -16,9 +16,8 @@ import { Card, DateRangeForm, Empty, ErrorBox, PageHeading, RagBadge, errorMessa
 import { numClass, primaryButtonClass, tableClass, tdClass, thClass } from './styles';
 
 const KINDS = {
-  // Unpaid expenses are listed first, as a group: they're the treasurer's priority.
-  purchase: { title: 'Expenses', noun: 'expense', party: 'Supplier', addHref: '/trustees/expenses/new', addLabel: 'Add Expense', load: getPurchases, groupUnpaid: true },
-  invoice: { title: 'Invoices', noun: 'invoice', party: 'Client', addHref: '/trustees/invoices/new', addLabel: 'Add Invoice', load: getInvoices, groupUnpaid: false },
+  purchase: { title: 'Expenses', noun: 'expense', party: 'Supplier', addHref: '/trustees/expenses/new', addLabel: 'Add Expense', load: getPurchases, settledTitle: 'Paid & credit notes' },
+  invoice: { title: 'Invoices', noun: 'invoice', party: 'Client', addHref: '/trustees/invoices/new', addLabel: 'Add Invoice', load: getInvoices, settledTitle: 'Paid' },
 };
 
 const RAG_EDGE = { green: 'border-l-green-600', amber: 'border-l-amber-500', red: 'border-l-red-600' };
@@ -40,12 +39,11 @@ export default async function DocumentList({ kind, period, intro }: {
   const total = rows.reduce((s, r) => s + r.gross, 0);
   const hasLinks = rows.some((r) => quickFileUrl(kind, r.id));
   const columns = hasLinks ? 8 : 7;
-  const groups: Array<{ title?: string; rows: DocumentRow[] }> = k.groupUnpaid
-    ? [
-        { title: 'Unpaid', rows: rows.filter((r) => !isSettled(r.status)) },
-        { title: 'Paid & credit notes', rows: rows.filter((r) => isSettled(r.status)) },
-      ].filter((g) => g.rows.length > 0)
-    : [{ rows }];
+  // Unpaid first, as a group: they're the treasurer's priority.
+  const groups = [
+    { title: 'Unpaid', rows: rows.filter((r) => !isSettled(r.status)) },
+    { title: k.settledTitle, rows: rows.filter((r) => isSettled(r.status)) },
+  ].filter((g) => g.rows.length > 0);
 
   return (
     <>
@@ -74,7 +72,7 @@ export default async function DocumentList({ kind, period, intro }: {
                 </tr>
               </thead>
               {groups.map((g) => (
-                <tbody key={g.title ?? 'all'}>
+                <tbody key={g.title}>
                   {g.title && (
                     <tr className="bg-gray-100">
                       <th scope="rowgroup" colSpan={columns} className="px-3 py-2 text-left font-semibold text-gray-900 border-l-[3px] border-l-transparent">

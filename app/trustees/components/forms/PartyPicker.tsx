@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import type { Contact } from '@/lib/quickfile/submissions';
 import { inputClass, labelClass } from '../styles';
+import Combobox from './Combobox';
 
 /**
  * Choose an existing QuickFile supplier/client or enter a new one.
@@ -10,11 +11,9 @@ import { inputClass, labelClass } from '../styles';
  */
 export default function PartyPicker({ label, contacts }: { label: 'supplier' | 'client'; contacts: Contact[] }) {
   const [mode, setMode] = useState<'existing' | 'new'>(contacts.length ? 'existing' : 'new');
-  const [filter, setFilter] = useState('');
-  const shown = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    return q ? contacts.filter((c) => c.name.toLowerCase().includes(q)) : contacts;
-  }, [contacts, filter]);
+  // Name carried over when "Add … as a new supplier" is picked from the search.
+  const [newName, setNewName] = useState('');
+  const options = useMemo(() => contacts.map((c) => ({ value: String(c.id), label: c.name })), [contacts]);
   const Label = label[0].toUpperCase() + label.slice(1);
 
   return (
@@ -33,24 +32,24 @@ export default function PartyPicker({ label, contacts }: { label: 'supplier' | '
       </div>
 
       {mode === 'existing' ? (
-        <div className="grid gap-2 sm:grid-cols-2">
-          <div>
-            <label htmlFor="party_filter" className={labelClass}>Search</label>
-            <input id="party_filter" type="search" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={`Filter ${contacts.length} ${label}s…`} className={inputClass} />
-          </div>
-          <div>
-            <label htmlFor="party_id" className={labelClass}>{Label}</label>
-            <select id="party_id" name="party_id" required className={inputClass} defaultValue="">
-              <option value="" disabled>Choose…</option>
-              {shown.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
+        <div className="sm:max-w-md">
+          <label htmlFor="party_search" className={labelClass}>{Label} *</label>
+          <Combobox
+            id="party_search"
+            name="party_id"
+            options={options}
+            required
+            requiredMessage={`Choose a ${label} from the list, or add a new one.`}
+            placeholder={`Start typing to search ${contacts.length} ${label}s…`}
+            onNoMatch={(name) => { setNewName(name); setMode('new'); }}
+            noMatchLabel={(name) => `+ Add “${name}” as a new ${label}`}
+          />
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 rounded-md border border-gray-200 bg-gray-50 p-4">
           <div className="sm:col-span-2">
             <label htmlFor="new_company" className={labelClass}>{label === 'supplier' ? 'Business or person name' : 'Client / organisation name'} *</label>
-            <input id="new_company" name="new_company" required minLength={2} maxLength={100} className={inputClass} />
+            <input id="new_company" name="new_company" required minLength={2} maxLength={100} defaultValue={newName} autoFocus={!!newName} className={inputClass} />
           </div>
           <div>
             <label htmlFor="new_first" className={labelClass}>Contact first name</label>
