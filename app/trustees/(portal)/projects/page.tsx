@@ -11,6 +11,7 @@
 import { requireTrustee } from '@/lib/trustees/auth';
 import { getProjects, type DocumentRow, type ProjectSummary } from '@/lib/quickfile/reports';
 import { formatGBP, formatGBPAccounting } from '@/lib/quickfile/format';
+import { statusLabel } from '@/lib/quickfile/status';
 import { Card, DateRangeForm, Empty, ErrorBox, PageHeading, RagBadge, Stat, errorMessage, ragStatus, resolvePeriod, type SearchParams } from '../../components/ui';
 import { numClass, tableClass, tdClass, thClass } from '../../components/styles';
 
@@ -39,7 +40,7 @@ function DocumentTable({ rows, total, party }: { rows: DocumentRow[]; total: num
               <td className={`${tdClass} whitespace-nowrap`}>{r.date || '—'}</td>
               <td className={tdClass}>{r.party || '—'}</td>
               <td className={tdClass}>{r.description || '—'}</td>
-              <td className={tdClass}>{r.status || '—'}</td>
+              <td className={tdClass}>{statusLabel(r.status)}</td>
               <td className={`${tdClass} ${numClass}`}>{formatGBP(r.gross)}</td>
             </tr>
           ))}

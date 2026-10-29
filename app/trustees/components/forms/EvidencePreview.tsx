@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { cardTitleClass, secondaryButtonClass } from '../styles';
+import { secondaryButtonClass } from '../styles';
 
 const isImage = (f: File) => /^image\/(jpeg|png|webp|gif)$/.test(f.type);
 const isPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 
 /**
- * Inline preview of the evidence the trustee just uploaded — the API can't
+ * Collapsed-by-default preview of the evidence the trustee just uploaded — the API can't
  * read receipts back from QuickFile, so these are the browser's own copies.
  * Object URLs aren't revoked: the page is reloaded for the next submission.
  */
@@ -16,9 +16,11 @@ export default function EvidencePreview({ files }: { files: File[] }) {
   if (files.length === 0) return null;
 
   return (
-    <section className="mt-6" aria-labelledby="evidence-preview-title">
-      <h3 id="evidence-preview-title" className={cardTitleClass}>Supporting evidence</h3>
-      <div className="space-y-6">
+    <details className="mt-6">
+      <summary className="cursor-pointer text-sm text-chapel-600 hover:underline">
+        Show supporting evidence ({files.length} file{files.length === 1 ? '' : 's'})
+      </summary>
+      <div className="mt-4 space-y-6">
         {files.map((f, i) => (
           <figure key={i}>
             <figcaption className="flex flex-wrap items-center justify-between gap-3 mb-2 text-sm text-gray-800">
@@ -36,6 +38,6 @@ export default function EvidencePreview({ files }: { files: File[] }) {
           </figure>
         ))}
       </div>
-    </section>
+    </details>
   );
 }

@@ -9,9 +9,9 @@
  * - The trustee either picks an existing supplier/client (by QuickFile ID) or
  *   enters a new one, which is created first. Creating a duplicate name is
  *   refused so the ledger doesn't fill with near-identical contacts.
- * - Every expense is recorded unpaid — the treasurer records the payment.
- *   The trustee's choice of account ("paid personally" or a chapel account)
- *   is only a note to the treasurer about where the money should come from.
+ * - Every expense is recorded unpaid — the treasurer pays it from one of the
+ *   chapel's accounts and records the payment. The trustee's choice of
+ *   account is only a note to the treasurer about where it should come from.
  * - The chapel is not VAT registered, so every line is posted at 0% VAT.
  * - The purchase/invoice is created first, then each supporting file is
  *   attached. QuickFile's record-level attachments are aimed at receipts and
@@ -233,8 +233,8 @@ export interface ExpenseInput {
   description: string;
   lines: LineInput[];
   projectTag: string;
-  /** Chapel bank account name the treasurer should pay from, or null if paid personally */
-  payFromAccount: string | null;
+  /** Chapel bank account name the treasurer should pay from */
+  payFromAccount: string;
   files: File[];
 }
 
@@ -306,7 +306,7 @@ async function readBack<T>(path: string, map: (r: Record<string, unknown>) => T)
   }
 }
 
-const readPurchase = (id: number) => readBack(`purchases/${id}`, (p): SubmittedRecord => ({
+const mapPurchase = (p: Record<string, unknown>): SubmittedRecord => ({
   date: str(p.receipt_date),
   dueDate: str(p.due_date) || undefined,
   reference: str(p.supplier_reference),
@@ -319,7 +319,19 @@ const readPurchase = (id: number) => readBack(`purchases/${id}`, (p): SubmittedR
     total: num(l.line_total ?? l.sub_total),
   })),
   total: num(p.gross_total),
-}));
+});
+
+const readPurchase = (id: number) => readBack(`purchases/${id}`, mapPurchase);
+
+/** A purchase as QuickFile stored it, with nominal names filled in (throws on failure). */
+export async function getPurchase(id: number): Promise<{ number: string; supplierName: string; record: SubmittedRecord }> {
+  const [raw, nominals] = await Promise.all([qfGet<Record<string, unknown>>(`purchases/${id}`), getNominals()]);
+  const p = (raw.data as Record<string, unknown> | undefined) ?? raw;
+  const names = new Map(nominals.map((n) => [n.code, n.name]));
+  const record = mapPurchase(p);
+  record.lines = record.lines.map((l) => ({ ...l, nominalName: names.get(l.nominalCode) }));
+  return { number: str(p.receipt_number) || String(id), supplierName: str(p.supplier_name), record };
+}
 
 const readInvoice = (id: number) => readBack(`invoices/${id}`, (i): SubmittedRecord => ({
   date: str(i.issue_date),
@@ -345,9 +357,6 @@ const field = (r: Record<string, unknown>, key: string) =>
 export async function submitExpense(input: ExpenseInput, by: Submitter): Promise<SubmissionResult> {
   const supplier = await resolveParty('suppliers', input.supplier);
   const total = round2(input.lines.reduce((s, l) => s + l.amount, 0));
-  const paymentNote = input.payFromAccount === null
-    ? 'paid personally, reimbursement due'
-    : `to be paid from ${input.payFromAccount}`;
 
   const purchase = await qfPost<Record<string, unknown>>('purchases', {
     supplier_id: supplier.id,
@@ -361,7 +370,7 @@ export async function submitExpense(input: ExpenseInput, by: Submitter): Promise
     item_lines: input.lines.map((l, i) => ({
       nominal_code: l.nominalCode,
       description: i === 0
-        ? `${l.description} — submitted by ${by.name}; ${paymentNote}`
+        ? `${l.description} — submitted by ${by.name}; to be paid from ${input.payFromAccount}`
         : l.description,
       sub_total: l.amount,
       vat_rate: 0,

@@ -57,11 +57,11 @@ export default async function NewExpensePage() {
               <input id="reference" name="reference" maxLength={30} className={inputClass} />
             </div>
             <div>
-              <label htmlFor="paid_from" className={labelClass}>How should it be paid? *</label>
-              <select id="paid_from" name="paid_from" required defaultValue="personal" className={inputClass}>
-                <option value="personal">I paid personally — please reimburse me</option>
+              <label htmlFor="paid_from" className={labelClass}>Pay from which account? *</label>
+              <select id="paid_from" name="paid_from" required defaultValue="" className={inputClass}>
+                <option value="" disabled>Choose an account…</option>
                 {options.bankAccounts.map((a) => (
-                  <option key={a.nominalCode} value={a.nominalCode}>Pay from: {a.name}</option>
+                  <option key={a.nominalCode} value={a.nominalCode}>{a.name}</option>
                 ))}
               </select>
             </div>

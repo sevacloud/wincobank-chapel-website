@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { getInvoices, getPurchases, type DocumentRow } from '@/lib/quickfile/reports';
 import { quickFileUrl } from '@/lib/quickfile/links';
 import { formatDate, formatGBP } from '@/lib/quickfile/format';
+import { isSettled, statusLabel, statusRag } from '@/lib/quickfile/status';
 import { Card, DateRangeForm, Empty, ErrorBox, PageHeading, RagBadge, errorMessage, type Period } from './ui';
 import { numClass, primaryButtonClass, tableClass, tdClass, thClass } from './styles';
 
@@ -19,16 +20,6 @@ const KINDS = {
   purchase: { title: 'Expenses', noun: 'expense', party: 'Supplier', addHref: '/trustees/expenses/new', addLabel: 'Add Expense', load: getPurchases, groupUnpaid: true },
   invoice: { title: 'Invoices', noun: 'invoice', party: 'Client', addHref: '/trustees/invoices/new', addLabel: 'Add Invoice', load: getInvoices, groupUnpaid: false },
 };
-
-const capitalise = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : '—');
-
-/** Paid → green, overdue → red, anything still outstanding (draft, unpaid, sent, part paid) → amber. */
-function statusRag(status: string): 'green' | 'amber' | 'red' {
-  const s = status.toLowerCase().replace(/[\s_-]+/g, '');
-  if (s === 'paid') return 'green';
-  if (s.includes('overdue')) return 'red';
-  return 'amber';
-}
 
 const RAG_EDGE = { green: 'border-l-green-600', amber: 'border-l-amber-500', red: 'border-l-red-600' };
 
@@ -51,8 +42,8 @@ export default async function DocumentList({ kind, period, intro }: {
   const columns = hasLinks ? 8 : 7;
   const groups: Array<{ title?: string; rows: DocumentRow[] }> = k.groupUnpaid
     ? [
-        { title: 'Unpaid', rows: rows.filter((r) => statusRag(r.status) !== 'green') },
-        { title: 'Paid', rows: rows.filter((r) => statusRag(r.status) === 'green') },
+        { title: 'Unpaid', rows: rows.filter((r) => !isSettled(r.status)) },
+        { title: 'Paid & credit notes', rows: rows.filter((r) => isSettled(r.status)) },
       ].filter((g) => g.rows.length > 0)
     : [{ rows }];
 
@@ -94,7 +85,7 @@ export default async function DocumentList({ kind, period, intro }: {
                   {g.rows.map((r) => {
                     const url = quickFileUrl(kind, r.id);
                     const rag = statusRag(r.status);
-                    const label = capitalise(r.status);
+                    const label = statusLabel(r.status);
                     return (
                       <tr key={r.id}>
                         <td className={`${tdClass} whitespace-nowrap border-l-[3px] ${RAG_EDGE[rag]}`}>{r.number || '—'}</td>

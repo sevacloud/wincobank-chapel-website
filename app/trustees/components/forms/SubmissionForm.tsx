@@ -7,7 +7,7 @@ import { primaryButtonClass, secondaryButtonClass } from '../styles';
 import EvidenceInput from './EvidenceInput';
 import SubmittedRecord from './SubmittedRecord';
 import EvidencePreview from './EvidencePreview';
-import { InvoicePdf, SendInvoiceButton, invoicePdfUrl } from './InvoiceDelivery';
+import { RecordPdf, SendInvoiceButton, pdfUrl } from './InvoiceDelivery';
 
 const STATUS_TEXT = {
   attached: 'attached in QuickFile',
@@ -19,8 +19,8 @@ const STATUS_TEXT = {
  * Shared shell for the expense and invoice forms: submits via a server
  * action without React's automatic form reset (so a validation error keeps
  * everything the trustee typed), appends evidence files, and shows the
- * QuickFile outcome — the record, the invoice PDF and send workflow, and a
- * preview of the evidence.
+ * QuickFile outcome — the record, its PDF (plus the invoice send workflow),
+ * and a collapsed preview of the evidence.
  */
 export default function SubmissionForm({ action, kind, submitLabel, children }: {
   action: (prev: SubmitState, fd: FormData) => Promise<SubmitState>;
@@ -70,12 +70,8 @@ export default function SubmissionForm({ action, kind, submitLabel, children }: 
                 View in QuickFile
               </a>
             )}
-            {kind === 'Invoice' && (
-              <>
-                <a href={invoicePdfUrl(r.id, true)} className={`${secondaryButtonClass} bg-white`}>Download PDF</a>
-                <SendInvoiceButton id={r.id} number={r.number} />
-              </>
-            )}
+            <a href={pdfUrl(kind, r.id, true)} className={`${secondaryButtonClass} bg-white`}>Download PDF</a>
+            {kind === 'Invoice' && <SendInvoiceButton id={r.id} number={r.number} />}
             <button
               type="button"
               className={`${secondaryButtonClass} bg-white`}
@@ -87,7 +83,7 @@ export default function SubmissionForm({ action, kind, submitLabel, children }: 
           </div>
         </div>
         {r.record && <SubmittedRecord kind={kind} number={r.number} partyName={r.partyName} record={r.record} />}
-        {kind === 'Invoice' && <InvoicePdf id={r.id} number={r.number} />}
+        <RecordPdf kind={kind} id={r.id} number={r.number} />
         <EvidencePreview files={files} />
       </>
     );

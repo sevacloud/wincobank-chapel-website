@@ -2,20 +2,25 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { emailInvoiceAction, loadInvoiceContactsAction, type InvoiceContactsState } from '../../submit-actions';
+import { isInvoiceSent } from '@/lib/quickfile/status';
 import { cardTitleClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../styles';
 
-export const invoicePdfUrl = (id: number, download = false) =>
-  `/api/trustees/invoices/${id}/pdf${download ? '?download=1' : ''}`;
+type PdfKind = 'Purchase' | 'Invoice';
 
-/** The invoice PDF as QuickFile renders it. */
-export function InvoicePdf({ id, number }: { id: number; number: string }) {
+export const pdfUrl = (kind: PdfKind, id: number, download = false) =>
+  `/api/trustees/${kind === 'Invoice' ? 'invoices' : 'purchases'}/${id}/pdf${download ? '?download=1' : ''}`;
+
+const invoicePdfUrl = (id: number, download = false) => pdfUrl('Invoice', id, download);
+
+/** Invoices: QuickFile's own PDF. Purchases: a summary generated from the record. */
+export function RecordPdf({ kind, id, number }: { kind: PdfKind; id: number; number: string }) {
   return (
-    <section className="mt-6" aria-labelledby="invoice-pdf-title">
+    <section className="mt-6" aria-labelledby="record-pdf-title">
       <div className={`${cardTitleClass} flex flex-wrap items-baseline justify-between gap-3`}>
-        <h3 id="invoice-pdf-title">Invoice PDF</h3>
-        <a href={invoicePdfUrl(id, true)} className={`${secondaryButtonClass} font-normal`}>Download PDF</a>
+        <h3 id="record-pdf-title">{kind} {number} PDF</h3>
+        <a href={pdfUrl(kind, id, true)} className={`${secondaryButtonClass} font-normal`}>Download PDF</a>
       </div>
-      <iframe src={invoicePdfUrl(id)} title={`Invoice ${number} PDF`} className="w-full h-[56rem] rounded-md border border-gray-200" />
+      <iframe src={pdfUrl(kind, id)} title={`${kind} ${number} PDF`} className="w-full h-[56rem] rounded-md border border-gray-200" />
     </section>
   );
 }
@@ -72,7 +77,7 @@ export function SendInvoiceButton({ id, number }: { id: number; number: string }
   }
 
   const ready = details && !('error' in details) ? details : null;
-  const alreadySent = ready?.status.toLowerCase() === 'sent';
+  const alreadySent = ready ? isInvoiceSent(ready.status) : false;
   const emailable = ready?.contacts.filter((c) => c.email) ?? [];
 
   return (

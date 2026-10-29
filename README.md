@@ -92,8 +92,8 @@ One-off Supabase setting: Authentication → Sign In / Providers → disable
 - QuickFile allows 5,000 API requests per day; responses are cached in memory
   for 15 minutes and the cache is cleared after every submission.
 - All lines are posted at 0% VAT (the chapel is not VAT registered).
-- "Paid personally" expenses are left unpaid in QuickFile so the treasurer can
-  reimburse; "paid from chapel account" expenses are recorded as paid.
+- Expenses are always recorded unpaid; the chapel account the trustee picks is
+  noted on the purchase as where the treasurer should pay it from.
 - Files QuickFile won't attach to a purchase/invoice directly (e.g. `.txt`) are
   saved to QuickFile Documents › *Trustee Submissions*, prefixed with the record number.
 - Attachments are limited to 10 files / 4.5 MB per submission (Netlify request

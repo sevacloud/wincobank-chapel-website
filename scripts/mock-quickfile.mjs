@@ -68,17 +68,17 @@ for (const ym of months) {
   const supplierFor = { Gas: 1, Water: 2, Insurance: 4, Electricity: 1 };
   for (const [tag, code, lo, hi] of [['Gas', 7200, 60, 220], ['Electricity', 7201, 40, 120], ['Water', 7300, 15, 40]]) {
     const gross = money(lo, hi);
-    purchases.push({ id: nextId++, receipt_number: `P${nextId}`, receipt_date: `${ym}-05`, supplier_id: supplierFor[tag], supplier_name: suppliers.find((s) => s.id === supplierFor[tag]).company_name, description: `${tag} bill`, status: 'paid', net_total: gross, gross_total: gross, tags: [tag], code });
+    purchases.push({ id: nextId++, receipt_number: `P${nextId}`, receipt_date: `${ym}-05`, supplier_id: supplierFor[tag], supplier_name: suppliers.find((s) => s.id === supplierFor[tag]).company_name, description: `${tag} bill`, status: 'PAIDFULL', net_total: gross, gross_total: gross, tags: [tag], code });
     transactions[101].push({ id: nextId++, date: `${ym}-06`, reference: `${tag} DD`, notes: '', amount: -gross });
   }
   const hire = money(150, 600);
-  invoices.push({ id: nextId++, invoice_number: `INV${nextId}`, issue_date: `${ym}-10`, client_id: 1, client_company_name: 'Wincobank Toddler Group', description: 'Hall hire', status: 'paid', net_total: hire, gross_total: hire, tags: ['Community Lunch'], code: 4000 });
+  invoices.push({ id: nextId++, invoice_number: `INV${nextId}`, issue_date: `${ym}-10`, client_id: 1, client_company_name: 'Wincobank Toddler Group', description: 'Hall hire', status: 'PAIDFULL', net_total: hire, gross_total: hire, tags: ['Community Lunch'], code: 4000 });
   transactions[101].push({ id: nextId++, date: `${ym}-12`, reference: 'Hall hire', notes: '', amount: hire });
   transactions[101].push({ id: nextId++, date: `${ym}-20`, reference: 'Sunday collection', notes: '', amount: money(200, 450) });
   transactions[102].push({ id: nextId++, date: `${ym}-28`, reference: 'Standing order to reserve', notes: '', amount: 100 });
 }
 // One-off roof job with a project tag.
-purchases.push({ id: nextId++, receipt_number: 'P-ROOF', receipt_date: '2025-09-15', supplier_id: 3, supplier_name: 'Sheffield Roofing Ltd', description: 'Slate repairs', status: 'unpaid', net_total: 4250, gross_total: 4250, tags: ['Roof Repair'], code: 5000 });
+purchases.push({ id: nextId++, receipt_number: 'P-ROOF', receipt_date: '2025-09-15', supplier_id: 3, supplier_name: 'Sheffield Roofing Ltd', description: 'Slate repairs', status: 'UNPAID', net_total: 4250, gross_total: 4250, tags: ['Roof Repair'], code: 5000 });
 
 const OPENING = { 101: 3500, 102: 12000 };
 
@@ -267,7 +267,7 @@ createServer(async (req, res) => {
         if (!inv) return error(res, 404, 'Invoice not found');
         const contact = (contacts[inv.client_id] ?? []).find((c) => c.id === body.client_contact_id);
         if (!body.by_email || !contact?.email) return error(res, 400, 'A client contact with an email address is required');
-        inv.status = 'sent';
+        inv.status = 'SENT';
         console.log(`  (mock) emailed invoice ${inv.invoice_number} to ${contact.email}`);
         return send(res, 200, { success: true });
       }
@@ -278,7 +278,7 @@ createServer(async (req, res) => {
         if ((body.description ?? '').length > 35) return error(res, 400, 'The description must be less than 35 characters long.');
         if ((body.supplier_reference ?? '').length > 30) return error(res, 400, 'The supplier_reference must be less than 30 characters long.');
         const gross = body.item_lines.reduce((s, l) => s + l.sub_total, 0);
-        const p = { id: nextId++, receipt_number: `P${nextId}`, receipt_date: body.receipt_date, supplier_id: supplier.id, supplier_name: supplier.company_name, description: body.description, status: body.payment ? 'paid' : 'unpaid', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
+        const p = { id: nextId++, receipt_number: `P${nextId}`, receipt_date: body.receipt_date, supplier_id: supplier.id, supplier_name: supplier.company_name, description: body.description, status: body.payment ? 'PAIDFULL' : 'UNPAID', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
           supplier_reference: body.supplier_reference ?? '', due_date: body.receipt_date,
           item_lines: body.item_lines.map((l) => ({ id: nextId++, ...l, vat_amount: 0, line_total: l.sub_total })) };
         purchases.push(p);
@@ -293,7 +293,7 @@ createServer(async (req, res) => {
         if (!client) return error(res, 400, 'Unknown client_id');
         if (body.description && (body.description.length < 2 || body.description.length > 35)) return error(res, 400, 'description must be 2-35 characters');
         const gross = body.item_lines.reduce((s, l) => s + l.unit_cost * l.qty, 0);
-        const i = { id: nextId++, invoice_number: `INV${nextId}`, issue_date: body.issue_date, client_id: client.id, client_company_name: client.company_name, description: body.description, status: 'draft', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
+        const i = { id: nextId++, invoice_number: `INV${nextId}`, issue_date: body.issue_date, client_id: client.id, client_company_name: client.company_name, description: body.description, status: 'DRAFT', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
           purchase_reference: body.purchase_reference ?? '', term_days: body.term_days, notes: body.notes,
           item_lines: body.item_lines.map((l) => ({ id: nextId++, ...l, vat_amount: 0, line_total: l.unit_cost * l.qty })) };
         invoices.push(i);

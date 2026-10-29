@@ -1,5 +1,6 @@
 import type { SubmittedRecord as RecordData } from '@/lib/quickfile/submissions';
 import { formatDate, formatGBP } from '@/lib/quickfile/format';
+import { statusLabel } from '@/lib/quickfile/status';
 import { cardTitleClass, numClass, tableClass, tdClass, thClass } from '../styles';
 
 /** Read-only view of a purchase or invoice as QuickFile stored it. */
@@ -18,7 +19,7 @@ export default function SubmittedRecord({ kind, number, partyName, record }: {
     [isInvoice ? 'Purchase reference' : 'Receipt / invoice number', record.reference || '—'],
     ['Description', record.description || '—'],
     ['Project', record.tags.join(', ') || '—'],
-    ['Status', record.status ? record.status[0].toUpperCase() + record.status.slice(1) : '—'],
+    ['Status', statusLabel(record.status)],
   ];
 
   return (

@@ -145,13 +145,8 @@ export async function submitExpenseAction(_prev: SubmitState, fd: FormData): Pro
   const trustee = await requireTrustee();
   try {
     const options = await getFormOptions();
-    const paidFrom = String(fd.get('paid_from') ?? '');
-    let payFromAccount: string | null = null;
-    if (paidFrom !== 'personal') {
-      const account = options.bankAccounts.find((a) => a.nominalCode === Number(paidFrom));
-      if (!account) throw new ValidationError('Choose how this should be paid.');
-      payFromAccount = account.name;
-    }
+    const account = options.bankAccounts.find((a) => a.nominalCode === Number(fd.get('paid_from')));
+    if (!account) throw new ValidationError('Choose which account this should be paid from.');
 
     const result = await submitExpense({
       supplier: parseParty(fd, options.suppliers, 'supplier'),
@@ -161,7 +156,7 @@ export async function submitExpenseAction(_prev: SubmitState, fd: FormData): Pro
       description: requireText(fd, 'description', 'Description', { min: 2, max: 35 }),
       lines: parseLines(fd, options.purchaseCodes.map((c) => c.code), false),
       projectTag: parseProjectTag(fd, options.projectTags),
-      payFromAccount,
+      payFromAccount: account.name,
       files: parseFiles(fd),
     }, trustee);
     return { result: withNominalNames(result, options.purchaseCodes) };
