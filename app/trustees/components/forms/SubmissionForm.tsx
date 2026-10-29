@@ -5,6 +5,7 @@ import type { SubmitState } from '../../submit-actions';
 import { formatGBP } from '@/lib/quickfile/format';
 import { primaryButtonClass, secondaryButtonClass } from '../styles';
 import EvidenceInput from './EvidenceInput';
+import SubmittedRecord from './SubmittedRecord';
 
 const STATUS_TEXT = {
   attached: 'attached in QuickFile',
@@ -33,32 +34,52 @@ export default function SubmissionForm({ action, kind, filesRequired, submitLabe
     const r = state.result;
     const failed = r.files.filter((f) => f.status === 'failed');
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-6" role="status">
-        <h2 className="text-lg font-semibold text-green-900">{kind} {r.number} created in QuickFile</h2>
-        <p className="text-sm text-green-900 mt-1">{r.partyName} · {formatGBP(r.total)}</p>
-        {r.files.length > 0 && (
-          <ul className="mt-4 text-sm space-y-1">
-            {r.files.map((f, i) => (
-              <li key={i} className={f.status === 'failed' ? 'text-red-800' : 'text-gray-800'}>
-                {f.status === 'failed' ? '✕' : '✓'} {f.name} — {STATUS_TEXT[f.status]}{f.error ? ` (${f.error})` : ''}
-              </li>
-            ))}
-          </ul>
-        )}
-        {failed.length > 0 && (
-          <p className="mt-3 text-sm text-red-800">
-            The {kind.toLowerCase()} was saved, so <strong>don&apos;t submit it again</strong>. Please email the files that failed to the treasurer, quoting {kind.toLowerCase()} {r.number}.
-          </p>
-        )}
-        <button
-          type="button"
-          className={`${secondaryButtonClass} mt-5 bg-white`}
-          // A fresh load re-fetches suppliers/clients, which may now include a new one.
-          onClick={() => window.location.reload()}
+      <>
+        <div
+          className="rounded-lg border border-green-200 bg-green-50 p-6 scroll-mt-24 focus:outline-none"
+          role="status"
+          tabIndex={-1}
+          // The form is replaced in place while the page is scrolled to its submit
+          // button, so bring the outcome into view (clear of the sticky header).
+          ref={(el) => {
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            el?.focus({ preventScroll: true });
+          }}
         >
-          Submit another
-        </button>
-      </div>
+          <h2 className="text-lg font-semibold text-green-900">{kind} {r.number} created in QuickFile</h2>
+          <p className="text-sm text-green-900 mt-1">{r.partyName} · {formatGBP(r.total)}</p>
+          {r.files.length > 0 && (
+            <ul className="mt-4 text-sm space-y-1">
+              {r.files.map((f, i) => (
+                <li key={i} className={f.status === 'failed' ? 'text-red-800' : 'text-gray-800'}>
+                  {f.status === 'failed' ? '✕' : '✓'} {f.name} — {STATUS_TEXT[f.status]}{f.error ? ` (${f.error})` : ''}
+                </li>
+              ))}
+            </ul>
+          )}
+          {failed.length > 0 && (
+            <p className="mt-3 text-sm text-red-800">
+              The {kind.toLowerCase()} was saved, so <strong>don&apos;t submit it again</strong>. Please email the files that failed to the treasurer, quoting {kind.toLowerCase()} {r.number}.
+            </p>
+          )}
+          <div className="mt-5 flex flex-wrap gap-3">
+            {r.viewUrl && (
+              <a href={r.viewUrl} target="_blank" rel="noopener noreferrer" className={primaryButtonClass}>
+                View in QuickFile
+              </a>
+            )}
+            <button
+              type="button"
+              className={`${secondaryButtonClass} bg-white`}
+              // A fresh load re-fetches suppliers/clients, which may now include a new one.
+              onClick={() => window.location.reload()}
+            >
+              Submit another
+            </button>
+          </div>
+        </div>
+        {r.record && <SubmittedRecord kind={kind} number={r.number} partyName={r.partyName} record={r.record} />}
+      </>
     );
   }
 

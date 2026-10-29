@@ -169,6 +169,14 @@ createServer(async (req, res) => {
       if (path === 'purchases') {
         return send(res, 200, page(purchases.filter((p) => inRange(p.receipt_date, q) && (!q.tag_name || p.tags.includes(q.tag_name))), q));
       }
+      if ((r = m(/^purchases\/(\d+)$/))) {
+        const p = purchases.find((x) => x.id === Number(r[1]));
+        return p ? send(res, 200, p) : error(res, 404, 'Purchase not found');
+      }
+      if ((r = m(/^invoices\/(\d+)$/))) {
+        const i = invoices.find((x) => x.id === Number(r[1]));
+        return i ? send(res, 200, i) : error(res, 404, 'Invoice not found');
+      }
       if (path === 'ledgers/nominals') return send(res, 200, nominals);
       if (path === 'suppliers') return send(res, 200, page(suppliers, q));
       if (path === 'clients') return send(res, 200, page(clients, q));
@@ -215,7 +223,9 @@ createServer(async (req, res) => {
         if ((body.description ?? '').length > 35) return error(res, 400, 'The description must be less than 35 characters long.');
         if ((body.supplier_reference ?? '').length > 30) return error(res, 400, 'The supplier_reference must be less than 30 characters long.');
         const gross = body.item_lines.reduce((s, l) => s + l.sub_total, 0);
-        const p = { id: nextId++, receipt_number: `P${nextId}`, receipt_date: body.receipt_date, supplier_id: supplier.id, supplier_name: supplier.company_name, description: body.description, status: body.payment ? 'paid' : 'unpaid', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code };
+        const p = { id: nextId++, receipt_number: `P${nextId}`, receipt_date: body.receipt_date, supplier_id: supplier.id, supplier_name: supplier.company_name, description: body.description, status: body.payment ? 'paid' : 'unpaid', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
+          supplier_reference: body.supplier_reference ?? '', due_date: body.receipt_date,
+          item_lines: body.item_lines.map((l) => ({ id: nextId++, ...l, vat_amount: 0, line_total: l.sub_total })) };
         purchases.push(p);
         if (body.payment) {
           const bank = banks.find((b) => b.nominal_code === body.payment.nominal_code);
@@ -228,7 +238,9 @@ createServer(async (req, res) => {
         if (!client) return error(res, 400, 'Unknown client_id');
         if (body.description && (body.description.length < 2 || body.description.length > 35)) return error(res, 400, 'description must be 2-35 characters');
         const gross = body.item_lines.reduce((s, l) => s + l.unit_cost * l.qty, 0);
-        const i = { id: nextId++, invoice_number: `INV${nextId}`, issue_date: body.issue_date, client_company_name: client.company_name, description: body.description, status: 'draft', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code };
+        const i = { id: nextId++, invoice_number: `INV${nextId}`, issue_date: body.issue_date, client_company_name: client.company_name, description: body.description, status: 'draft', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
+          purchase_reference: body.purchase_reference ?? '', term_days: body.term_days, notes: body.notes,
+          item_lines: body.item_lines.map((l) => ({ id: nextId++, ...l, vat_amount: 0, line_total: l.unit_cost * l.qty })) };
         invoices.push(i);
         return send(res, 200, i);
       }

@@ -5,8 +5,9 @@
  * Route: /trustees/expenses/new
  *
  * Creates a purchase in QuickFile, creating the supplier first if needed,
- * and attaches the receipts. "Paid personally" leaves the purchase unpaid
- * so the treasurer can reimburse the trustee.
+ * and attaches the receipts. Every purchase is left unpaid for the
+ * treasurer; the chosen account is noted on it as where payment should
+ * come from.
  */
 
 import { requireTrustee } from '@/lib/trustees/auth';
@@ -56,11 +57,11 @@ export default async function NewExpensePage() {
               <input id="reference" name="reference" maxLength={30} className={inputClass} />
             </div>
             <div>
-              <label htmlFor="paid_from" className={labelClass}>How was it paid? *</label>
+              <label htmlFor="paid_from" className={labelClass}>How should it be paid? *</label>
               <select id="paid_from" name="paid_from" required defaultValue="personal" className={inputClass}>
                 <option value="personal">I paid personally — please reimburse me</option>
                 {options.bankAccounts.map((a) => (
-                  <option key={a.nominalCode} value={a.nominalCode}>Paid from: {a.name}</option>
+                  <option key={a.nominalCode} value={a.nominalCode}>Pay from: {a.name}</option>
                 ))}
               </select>
             </div>

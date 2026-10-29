@@ -126,6 +126,12 @@ function parseProjectTag(fd: FormData, tags: string[]): string {
   return tag;
 }
 
+function withNominalNames(result: SubmissionResult, codes: FormOptions['purchaseCodes']): SubmissionResult {
+  if (!result.record) return result;
+  const names = new Map(codes.map((c) => [c.code, c.name]));
+  return { ...result, record: { ...result.record, lines: result.record.lines.map((l) => ({ ...l, nominalName: names.get(l.nominalCode) })) } };
+}
+
 function failure(e: unknown, what: string): SubmitState {
   if (e instanceof ValidationError || e instanceof SubmissionError) return { error: e.message };
   console.error(`${what} failed:`, e);
@@ -138,10 +144,11 @@ export async function submitExpenseAction(_prev: SubmitState, fd: FormData): Pro
   try {
     const options = await getFormOptions();
     const paidFrom = String(fd.get('paid_from') ?? '');
-    let paidFromNominal: number | null = null;
+    let payFromAccount: string | null = null;
     if (paidFrom !== 'personal') {
-      paidFromNominal = Number(paidFrom);
-      if (!options.bankAccounts.some((a) => a.nominalCode === paidFromNominal)) throw new ValidationError('Choose how this was paid.');
+      const account = options.bankAccounts.find((a) => a.nominalCode === Number(paidFrom));
+      if (!account) throw new ValidationError('Choose how this should be paid.');
+      payFromAccount = account.name;
     }
 
     const result = await submitExpense({
@@ -152,10 +159,10 @@ export async function submitExpenseAction(_prev: SubmitState, fd: FormData): Pro
       description: requireText(fd, 'description', 'Description', { min: 2, max: 35 }),
       lines: parseLines(fd, options.purchaseCodes.map((c) => c.code), false),
       projectTag: parseProjectTag(fd, options.projectTags),
-      paidFromNominal,
+      payFromAccount,
       files: parseFiles(fd, { required: true }),
     }, trustee);
-    return { result };
+    return { result: withNominalNames(result, options.purchaseCodes) };
   } catch (e) {
     return failure(e, 'expense');
   }
@@ -180,7 +187,7 @@ export async function submitInvoiceAction(_prev: SubmitState, fd: FormData): Pro
       projectTag: parseProjectTag(fd, options.projectTags),
       files: parseFiles(fd, { required: false }),
     }, trustee);
-    return { result };
+    return { result: withNominalNames(result, options.salesCodes) };
   } catch (e) {
     return failure(e, 'invoice');
   }

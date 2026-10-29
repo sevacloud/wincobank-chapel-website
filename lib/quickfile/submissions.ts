@@ -9,9 +9,9 @@
  * - The trustee either picks an existing supplier/client (by QuickFile ID) or
  *   enters a new one, which is created first. Creating a duplicate name is
  *   refused so the ledger doesn't fill with near-identical contacts.
- * - "Paid personally" expenses are recorded unpaid so the treasurer can see
- *   what is owed and reimburse; "paid from a chapel account" expenses carry
- *   a payment against that bank nominal.
+ * - Every expense is recorded unpaid — the treasurer records the payment.
+ *   The trustee's choice of account ("paid personally" or a chapel account)
+ *   is only a note to the treasurer about where the money should come from.
  * - The chapel is not VAT registered, so every line is posted at 0% VAT.
  * - The purchase/invoice is created first, then each supporting file is
  *   attached. QuickFile's record-level attachments are aimed at receipts and
@@ -19,6 +19,10 @@
  *   Management under EVIDENCE_COLLECTION, prefixed with the record number,
  *   so nothing the trustee uploaded is lost. Upload failures never undo the
  *   created record — the trustee is told exactly which files need re-sending.
+ * - After creating, the record is read back so the trustee sees what
+ *   QuickFile actually stored. The API returns no web-app link, so "View in
+ *   QuickFile" is built from QUICKFILE_WEB_PURCHASE_URL / _INVOICE_URL
+ *   templates (with {id}); without them the button is hidden.
  */
 
 import 'server-only';
@@ -230,8 +234,8 @@ export interface ExpenseInput {
   description: string;
   lines: LineInput[];
   projectTag: string;
-  /** Bank nominal code (1200–1299) the expense was paid from, or null if paid personally */
-  paidFromNominal: number | null;
+  /** Chapel bank account name the treasurer should pay from, or null if paid personally */
+  payFromAccount: string | null;
   files: File[];
 }
 
@@ -251,13 +255,94 @@ export interface InvoiceInput {
   files: File[];
 }
 
+export interface RecordLine {
+  description: string;
+  nominalCode: number;
+  /** Filled in by the caller from its nominal lookups */
+  nominalName?: string;
+  /** Invoices only */
+  quantity?: number;
+  /** Invoices only */
+  unitCost?: number;
+  total: number;
+}
+
+/** The purchase or invoice as QuickFile stored it */
+export interface SubmittedRecord {
+  date: string;
+  /** Purchases: receipt due date; invoices: payment terms in days */
+  dueDate?: string;
+  termDays?: number;
+  reference: string;
+  description: string;
+  status: string;
+  tags: string[];
+  lines: RecordLine[];
+  total: number;
+}
+
 export interface SubmissionResult {
   id: number;
   number: string;
   partyName: string;
   total: number;
   files: FileOutcome[];
+  /** Null if reading the record back failed — it was still created */
+  record: SubmittedRecord | null;
+  viewUrl: string | null;
 }
+
+function viewUrl(kind: 'PURCHASE' | 'INVOICE', id: number): string | null {
+  const template = process.env[`QUICKFILE_WEB_${kind}_URL`];
+  return template ? template.replaceAll('{id}', String(id)) : null;
+}
+
+const str = (v: unknown) => (v == null ? '' : String(v));
+const num = (v: unknown) => Number(v ?? 0);
+const tagsOf = (v: unknown) => (Array.isArray(v) ? v.map(String) : []);
+
+async function readBack<T>(path: string, map: (r: Record<string, unknown>) => T): Promise<T | null> {
+  try {
+    const raw = await qfGet<Record<string, unknown>>(path);
+    return map((raw.data as Record<string, unknown> | undefined) ?? raw);
+  } catch (e) {
+    // Never throw: the record exists, and an error here would invite a resubmit.
+    console.error(`[QuickFile] reading back ${path} failed:`, e);
+    return null;
+  }
+}
+
+const readPurchase = (id: number) => readBack(`purchases/${id}`, (p): SubmittedRecord => ({
+  date: str(p.receipt_date),
+  dueDate: str(p.due_date) || undefined,
+  reference: str(p.supplier_reference),
+  description: str(p.description),
+  status: str(p.status),
+  tags: tagsOf(p.tags),
+  lines: ((p.item_lines as Array<Record<string, unknown>>) ?? []).map((l) => ({
+    description: str(l.description),
+    nominalCode: num(l.nominal_code),
+    total: num(l.line_total ?? l.sub_total),
+  })),
+  total: num(p.gross_total),
+}));
+
+const readInvoice = (id: number) => readBack(`invoices/${id}`, (i): SubmittedRecord => ({
+  date: str(i.issue_date),
+  termDays: i.term_days == null ? undefined : num(i.term_days),
+  reference: str(i.purchase_reference),
+  description: str(i.description),
+  status: str(i.status),
+  tags: tagsOf(i.tags),
+  lines: ((i.item_lines as Array<Record<string, unknown>>) ?? []).map((l) => ({
+    description: str(l.description || l.item_name),
+    nominalCode: num(l.nominal_code),
+    quantity: num(l.qty),
+    unitCost: num(l.unit_cost),
+    total: num(l.line_total),
+  })),
+  total: num(i.gross_total),
+}));
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const field = (r: Record<string, unknown>, key: string) =>
@@ -266,31 +351,27 @@ const field = (r: Record<string, unknown>, key: string) =>
 export async function submitExpense(input: ExpenseInput, by: Submitter): Promise<SubmissionResult> {
   const supplier = await resolveParty('suppliers', input.supplier);
   const total = round2(input.lines.reduce((s, l) => s + l.amount, 0));
-  const paidPersonally = input.paidFromNominal === null;
+  const paymentNote = input.payFromAccount === null
+    ? 'paid personally, reimbursement due'
+    : `to be paid from ${input.payFromAccount}`;
 
   const purchase = await qfPost<Record<string, unknown>>('purchases', {
     supplier_id: supplier.id,
     receipt_date: input.receiptDate,
     currency: 'GBP',
     // QuickFile caps the purchase description at 35 characters, so who
-    // submitted it (and whether they're owed money) goes on the first line,
+    // submitted it (and how it should be paid) goes on the first line,
     // whose description has no practical limit.
     description: input.description.slice(0, 35),
     supplier_reference: orUndefined(input.reference.slice(0, 30)),
     item_lines: input.lines.map((l, i) => ({
       nominal_code: l.nominalCode,
       description: i === 0
-        ? `${l.description} — submitted by ${by.name}${paidPersonally ? '; paid personally, reimbursement due' : ''}`
+        ? `${l.description} — submitted by ${by.name}; ${paymentNote}`
         : l.description,
       sub_total: l.amount,
       vat_rate: 0,
     })),
-    payment: paidPersonally ? undefined : {
-      date: input.receiptDate,
-      nominal_code: input.paidFromNominal,
-      amount: total,
-      notes: `Recorded by ${by.name} via trustee portal`,
-    },
     tags: input.projectTag ? [input.projectTag] : undefined,
   });
 
@@ -304,7 +385,7 @@ export async function submitExpense(input: ExpenseInput, by: Submitter): Promise
     form.set('receipt_name', `${supplier.name} ${input.receiptDate}`.slice(0, 100));
     return form;
   });
-  return { id, number, partyName: supplier.name, total, files };
+  return { id, number, partyName: supplier.name, total, files, record: await readPurchase(id), viewUrl: viewUrl('PURCHASE', id) };
 }
 
 export async function submitInvoice(input: InvoiceInput, by: Submitter): Promise<SubmissionResult> {
@@ -342,5 +423,5 @@ export async function submitInvoice(input: InvoiceInput, by: Submitter): Promise
     form.set('notes', `Uploaded by ${by.name}`);
     return form;
   });
-  return { id, number, partyName: client.name, total, files };
+  return { id, number, partyName: client.name, total, files, record: await readInvoice(id), viewUrl: viewUrl('INVOICE', id) };
 }

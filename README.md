@@ -57,6 +57,8 @@ Change Password.
 | `QUICKFILE_BANK_ACCOUNT_IDS` | | Comma list of QuickFile bank IDs to show (default: all visible accounts). |
 | `QUICKFILE_UTILITY_TAGS` | | Project tags used on utility bills (default `Gas,Electricity,Water,Broadband,Insurance,Alarm`). |
 | `QUICKFILE_PROJECT_BUDGETS` | | JSON map of project tag → budget in £, e.g. `{"Roof Repair":12000}`. |
+| `QUICKFILE_WEB_PURCHASE_URL` | | Link for "View in QuickFile" after an expense is submitted, with `{id}` for the purchase ID — copy it from a purchase's address bar in QuickFile. Button hidden if unset. |
+| `QUICKFILE_WEB_INVOICE_URL` | | As above for sales invoices (`{id}` = invoice ID). |
 | `QUICKFILE_API_URL` | | Override the API base URL (default `https://api-beta.quickfile.co.uk/`). |
 
 These are read at runtime, so they belong on Netlify, not in the GitHub build step.
