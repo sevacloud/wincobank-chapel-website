@@ -107,6 +107,11 @@ export async function qfGet<T>(path: string, query: Query = {}): Promise<T> {
   return value;
 }
 
+/** Uncached GET, for short-lived values (e.g. PDF links) and pre-write checks. */
+export async function qfGetFresh<T>(path: string, query: Query = {}): Promise<T> {
+  return request<T>('GET', path, { query });
+}
+
 /** Fetch every page of a paginated list endpoint and return the merged `data` rows. */
 export async function qfGetAll<T>(path: string, query: Query = {}): Promise<T[]> {
   const all: T[] = [];

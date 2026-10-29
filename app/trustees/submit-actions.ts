@@ -22,6 +22,7 @@ import {
   type SubmissionResult,
 } from '@/lib/quickfile/submissions';
 import { QuickFileError } from '@/lib/quickfile/client';
+import { emailInvoice, getInvoiceContacts, type InvoiceContact } from '@/lib/quickfile/invoice-delivery';
 import { ALLOWED_EXTENSIONS, MAX_FILES, MAX_TOTAL_BYTES } from './evidence-rules';
 
 export interface SubmitState {
@@ -107,9 +108,10 @@ function parseLines(fd: FormData, allowedCodes: number[], withQuantity: boolean)
   });
 }
 
-function parseFiles(fd: FormData, { required }: { required: boolean }): File[] {
+/** Evidence is required on every submission so the treasurer always has it. */
+function parseFiles(fd: FormData): File[] {
   const files = fd.getAll('files').filter((f): f is File => f instanceof File && f.size > 0);
-  if (required && files.length === 0) throw new ValidationError('Attach at least one receipt or supporting document.');
+  if (files.length === 0) throw new ValidationError('Attach at least one receipt or supporting document.');
   if (files.length > MAX_FILES) throw new ValidationError(`Attach no more than ${MAX_FILES} files.`);
   const total = files.reduce((s, f) => s + f.size, 0);
   if (total > MAX_TOTAL_BYTES) throw new ValidationError(`Attachments total ${(total / 1048576).toFixed(1)} MB — the limit is ${MAX_TOTAL_BYTES / 1048576} MB.`);
@@ -160,7 +162,7 @@ export async function submitExpenseAction(_prev: SubmitState, fd: FormData): Pro
       lines: parseLines(fd, options.purchaseCodes.map((c) => c.code), false),
       projectTag: parseProjectTag(fd, options.projectTags),
       payFromAccount,
-      files: parseFiles(fd, { required: true }),
+      files: parseFiles(fd),
     }, trustee);
     return { result: withNominalNames(result, options.purchaseCodes) };
   } catch (e) {
@@ -185,10 +187,42 @@ export async function submitInvoiceAction(_prev: SubmitState, fd: FormData): Pro
       notes: text(fd, 'notes', 1000),
       lines: parseLines(fd, options.salesCodes.map((c) => c.code), true),
       projectTag: parseProjectTag(fd, options.projectTags),
-      files: parseFiles(fd, { required: false }),
+      files: parseFiles(fd),
     }, trustee);
     return { result: withNominalNames(result, options.salesCodes) };
   } catch (e) {
     return failure(e, 'invoice');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sending an invoice to the client
+// ---------------------------------------------------------------------------
+
+export type InvoiceContactsState =
+  | { error: string }
+  | { clientName: string; status: string; contacts: InvoiceContact[] };
+
+export async function loadInvoiceContactsAction(invoiceId: number): Promise<InvoiceContactsState> {
+  await requireTrustee();
+  if (!Number.isInteger(invoiceId) || invoiceId <= 0) return { error: 'Invalid invoice.' };
+  try {
+    return await getInvoiceContacts(invoiceId);
+  } catch (e) {
+    console.error('Loading invoice contacts failed:', e);
+    return { error: e instanceof QuickFileError ? e.message : 'Could not load the client’s contacts.' };
+  }
+}
+
+export async function emailInvoiceAction(invoiceId: number, contactId: number): Promise<{ error: string } | { sentTo: string }> {
+  await requireTrustee();
+  if (!Number.isInteger(invoiceId) || invoiceId <= 0 || !Number.isInteger(contactId) || contactId <= 0) {
+    return { error: 'Choose who to send the invoice to.' };
+  }
+  try {
+    return { sentTo: await emailInvoice(invoiceId, contactId) };
+  } catch (e) {
+    console.error('Emailing invoice failed:', e);
+    return { error: e instanceof QuickFileError ? e.message : 'Something went wrong — check QuickFile before trying again.' };
   }
 }

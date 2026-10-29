@@ -32,10 +32,10 @@ async function shrink(file: File): Promise<File> {
  * Multi-file picker for receipts and supporting evidence. Files are held in
  * the parent's state and appended to the FormData on submit.
  */
-export default function EvidenceInput({ files, onChange, required }: {
+export default function EvidenceInput({ files, onChange, label }: {
   files: File[];
   onChange: (files: File[]) => void;
-  required: boolean;
+  label: string;
 }) {
   const id = useId();
   const [busy, setBusy] = useState(false);
@@ -63,7 +63,7 @@ export default function EvidenceInput({ files, onChange, required }: {
   return (
     <fieldset>
       <legend className="text-sm font-semibold text-gray-900 mb-1">
-        {required ? 'Receipts & supporting evidence *' : 'Supporting evidence'}
+        {label} *
       </legend>
       <p className="text-xs text-gray-500 mb-2">
         PDF, photos (JPG, PNG, HEIC), text, Word or Excel files · up to {MAX_FILES} files, {mb(MAX_TOTAL_BYTES)} in total. Large photos are shrunk automatically.

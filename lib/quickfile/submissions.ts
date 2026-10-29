@@ -20,14 +20,13 @@
  *   so nothing the trustee uploaded is lost. Upload failures never undo the
  *   created record — the trustee is told exactly which files need re-sending.
  * - After creating, the record is read back so the trustee sees what
- *   QuickFile actually stored. The API returns no web-app link, so "View in
- *   QuickFile" is built from QUICKFILE_WEB_PURCHASE_URL / _INVOICE_URL
- *   templates (with {id}); without them the button is hidden.
+ *   QuickFile actually stored, with a "View in QuickFile" link (see links.ts).
  */
 
 import 'server-only';
 import { qfGet, qfGetAll, qfPost, qfUpload } from './client';
 import { getBankAccounts } from './reports';
+import { quickFileUrl } from './links';
 
 /** Document Management folder for evidence QuickFile won't attach directly. */
 const EVIDENCE_COLLECTION = 'Trustee Submissions';
@@ -292,11 +291,6 @@ export interface SubmissionResult {
   viewUrl: string | null;
 }
 
-function viewUrl(kind: 'PURCHASE' | 'INVOICE', id: number): string | null {
-  const template = process.env[`QUICKFILE_WEB_${kind}_URL`];
-  return template ? template.replaceAll('{id}', String(id)) : null;
-}
-
 const str = (v: unknown) => (v == null ? '' : String(v));
 const num = (v: unknown) => Number(v ?? 0);
 const tagsOf = (v: unknown) => (Array.isArray(v) ? v.map(String) : []);
@@ -385,7 +379,7 @@ export async function submitExpense(input: ExpenseInput, by: Submitter): Promise
     form.set('receipt_name', `${supplier.name} ${input.receiptDate}`.slice(0, 100));
     return form;
   });
-  return { id, number, partyName: supplier.name, total, files, record: await readPurchase(id), viewUrl: viewUrl('PURCHASE', id) };
+  return { id, number, partyName: supplier.name, total, files, record: await readPurchase(id), viewUrl: quickFileUrl('purchase', id) };
 }
 
 export async function submitInvoice(input: InvoiceInput, by: Submitter): Promise<SubmissionResult> {
@@ -423,5 +417,5 @@ export async function submitInvoice(input: InvoiceInput, by: Submitter): Promise
     form.set('notes', `Uploaded by ${by.name}`);
     return form;
   });
-  return { id, number, partyName: client.name, total, files, record: await readInvoice(id), viewUrl: viewUrl('INVOICE', id) };
+  return { id, number, partyName: client.name, total, files, record: await readInvoice(id), viewUrl: quickFileUrl('invoice', id) };
 }

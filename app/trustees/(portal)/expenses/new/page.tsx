@@ -39,7 +39,7 @@ export default async function NewExpensePage() {
       </PageHeading>
 
       <div className={cardClass}>
-        <SubmissionForm action={submitExpenseAction} kind="Purchase" filesRequired submitLabel="Submit expense">
+        <SubmissionForm action={submitExpenseAction} kind="Purchase" submitLabel="Submit expense">
           <PartyPicker label="supplier" contacts={options.suppliers} />
 
           <fieldset className="grid gap-4 sm:grid-cols-2">

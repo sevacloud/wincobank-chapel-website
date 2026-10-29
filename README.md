@@ -44,7 +44,7 @@ invoices**, adding new suppliers/clients and attaching receipts and supporting
 documents. Submissions go straight into QuickFile — there is no approval queue.
 
 Pages: Overview · Monthly Summary · Projects · Utilities · Annual Statement ·
-3-Year Comparison · Submit an Expense · Raise an Invoice · Manage Trustees ·
+3-Year Comparison · Expenses (list + add) · Invoices (list + add) · Manage Trustees ·
 Change Password.
 
 ### Environment variables (Netlify → Site configuration → Environment variables)

@@ -12,19 +12,22 @@ const REPORTS = [
   { href: '/trustees/year-comparison', label: '3-Year Comparison' },
 ];
 
-const SUBMIT = [
-  { href: '/trustees/expenses/new', label: 'Submit an Expense' },
-  { href: '/trustees/invoices/new', label: 'Raise an Invoice' },
+// Also active on sub-pages, e.g. /trustees/expenses/new.
+const RECORDS = [
+  { href: '/trustees/expenses', label: 'View Expenses', prefix: true },
+  { href: '/trustees/invoices', label: 'View Invoices', prefix: true },
 ];
 
-function NavGroup({ title, items, query }: { title: string; items: typeof REPORTS; query: string }) {
+type NavItem = { href: string; label: string; prefix?: boolean };
+
+function NavGroup({ title, items, query }: { title: string; items: NavItem[]; query: string }) {
   const pathname = usePathname();
   return (
     <div className="mb-5">
       <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">{title}</p>
       <ul className="flex flex-wrap gap-1 lg:flex-col">
         {items.map((item) => {
-          const active = pathname === item.href;
+          const active = pathname === item.href || (item.prefix && pathname.startsWith(`${item.href}/`));
           return (
             <li key={item.href}>
               <Link
@@ -50,7 +53,7 @@ export default function PortalNav() {
   return (
     <nav aria-label="Trustee portal">
       <NavGroup title="Reports" items={REPORTS} query={query} />
-      <NavGroup title="Submit" items={SUBMIT} query="" />
+      <NavGroup title="Expenses & Invoices" items={RECORDS} query={query} />
       <NavGroup
         title="Admin"
         items={[

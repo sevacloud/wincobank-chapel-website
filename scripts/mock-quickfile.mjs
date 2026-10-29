@@ -41,6 +41,11 @@ const suppliers = [
   { id: 3, company_name: 'Sheffield Roofing Ltd' }, { id: 4, company_name: 'Ecclesiastical Insurance' },
 ];
 const clients = [{ id: 1, company_name: 'Wincobank Toddler Group' }, { id: 2, company_name: 'Sheffield Choir Society' }];
+// Client contacts, keyed by client ID. The choir has no email, to exercise that path.
+const contacts = {
+  1: [{ id: 501, first_name: 'Sarah', surname: 'Hughes', email: 'sarah@example.org', is_default: true }],
+  2: [{ id: 502, first_name: 'Tom', surname: 'Reed', email: '', is_default: true }],
+};
 const tags = ['Roof Repair', 'Gas', 'Electricity', 'Water', 'Insurance', 'Community Lunch'];
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -67,7 +72,7 @@ for (const ym of months) {
     transactions[101].push({ id: nextId++, date: `${ym}-06`, reference: `${tag} DD`, notes: '', amount: -gross });
   }
   const hire = money(150, 600);
-  invoices.push({ id: nextId++, invoice_number: `INV${nextId}`, issue_date: `${ym}-10`, client_company_name: 'Wincobank Toddler Group', description: 'Hall hire', status: 'paid', net_total: hire, gross_total: hire, tags: ['Community Lunch'], code: 4000 });
+  invoices.push({ id: nextId++, invoice_number: `INV${nextId}`, issue_date: `${ym}-10`, client_id: 1, client_company_name: 'Wincobank Toddler Group', description: 'Hall hire', status: 'paid', net_total: hire, gross_total: hire, tags: ['Community Lunch'], code: 4000 });
   transactions[101].push({ id: nextId++, date: `${ym}-12`, reference: 'Hall hire', notes: '', amount: hire });
   transactions[101].push({ id: nextId++, date: `${ym}-20`, reference: 'Sunday collection', notes: '', amount: money(200, 450) });
   transactions[102].push({ id: nextId++, date: `${ym}-28`, reference: 'Standing order to reserve', notes: '', amount: 100 });
@@ -110,6 +115,30 @@ function profitAndLoss(q) {
 
 const error = (res, status, message) => send(res, status, { error: { type: 'mock', code: status, message } });
 
+/** Minimal one-page PDF saying which invoice it is. */
+function invoicePdf(inv) {
+  const text = `Invoice ${inv.invoice_number} - ${inv.client_company_name} - GBP ${inv.gross_total.toFixed(2)} (mock)`.replace(/[()\\]/g, '');
+  const stream = `BT /F1 16 Tf 60 760 Td (${text}) Tj ET`;
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = objects.map((o, i) => {
+    const at = pdf.length;
+    pdf += `${i + 1} 0 obj\n${o}\nendobj\n`;
+    return at;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  pdf += offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('');
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(pdf, 'latin1');
+}
+
 function send(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': '4999' });
   res.end(JSON.stringify(body));
@@ -147,6 +176,15 @@ createServer(async (req, res) => {
   const path = url.pathname.replace(/^\/+|\/+$/g, '');
   const m = (re) => path.match(re);
 
+  // Stands in for QuickFile's PDF link, which needs no API token.
+  let pdfMatch;
+  if (req.method === 'GET' && (pdfMatch = path.match(/^pdf\/(\d+)$/))) {
+    const inv = invoices.find((x) => x.id === Number(pdfMatch[1]));
+    if (!inv) return error(res, 404, 'Invoice not found');
+    res.writeHead(200, { 'Content-Type': 'application/pdf' });
+    return res.end(invoicePdf(inv));
+  }
+
   if (!req.headers.authorization?.startsWith('Bearer ')) return error(res, 401, 'Missing bearer token');
 
   try {
@@ -173,6 +211,11 @@ createServer(async (req, res) => {
         const p = purchases.find((x) => x.id === Number(r[1]));
         return p ? send(res, 200, p) : error(res, 404, 'Purchase not found');
       }
+      if ((r = m(/^invoices\/(\d+)\/get-pdf$/))) {
+        if (!invoices.some((x) => x.id === Number(r[1]))) return error(res, 404, 'Invoice not found');
+        return send(res, 200, { id: Number(r[1]), uri: `http://localhost:${PORT}/pdf/${r[1]}` });
+      }
+      if ((r = m(/^clients\/(\d+)\/contacts$/))) return send(res, 200, contacts[r[1]] ?? []);
       if ((r = m(/^invoices\/(\d+)$/))) {
         const i = invoices.find((x) => x.id === Number(r[1]));
         return i ? send(res, 200, i) : error(res, 404, 'Invoice not found');
@@ -212,9 +255,21 @@ createServer(async (req, res) => {
         clients.push(c);
         return send(res, 200, c);
       }
-      if (m(/^clients\/\d+\/contacts$/)) {
+      let r;
+      if ((r = m(/^clients\/(\d+)\/contacts$/))) {
         if (!body.first_name || !body.surname || !body.email) return error(res, 400, 'first_name, surname and email are required');
-        return send(res, 200, { id: nextId++ });
+        const c = { id: nextId++, first_name: body.first_name, surname: body.surname, email: body.email, is_default: !contacts[r[1]]?.length };
+        (contacts[r[1]] ??= []).push(c);
+        return send(res, 200, { id: c.id });
+      }
+      if ((r = m(/^invoices\/(\d+)\/send$/))) {
+        const inv = invoices.find((x) => x.id === Number(r[1]));
+        if (!inv) return error(res, 404, 'Invoice not found');
+        const contact = (contacts[inv.client_id] ?? []).find((c) => c.id === body.client_contact_id);
+        if (!body.by_email || !contact?.email) return error(res, 400, 'A client contact with an email address is required');
+        inv.status = 'sent';
+        console.log(`  (mock) emailed invoice ${inv.invoice_number} to ${contact.email}`);
+        return send(res, 200, { success: true });
       }
       if (path === 'purchases') {
         const supplier = suppliers.find((s) => s.id === body.supplier_id);
@@ -238,7 +293,7 @@ createServer(async (req, res) => {
         if (!client) return error(res, 400, 'Unknown client_id');
         if (body.description && (body.description.length < 2 || body.description.length > 35)) return error(res, 400, 'description must be 2-35 characters');
         const gross = body.item_lines.reduce((s, l) => s + l.unit_cost * l.qty, 0);
-        const i = { id: nextId++, invoice_number: `INV${nextId}`, issue_date: body.issue_date, client_company_name: client.company_name, description: body.description, status: 'draft', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
+        const i = { id: nextId++, invoice_number: `INV${nextId}`, issue_date: body.issue_date, client_id: client.id, client_company_name: client.company_name, description: body.description, status: 'draft', net_total: gross, gross_total: gross, tags: body.tags ?? [], code: body.item_lines[0].nominal_code,
           purchase_reference: body.purchase_reference ?? '', term_days: body.term_days, notes: body.notes,
           item_lines: body.item_lines.map((l) => ({ id: nextId++, ...l, vat_amount: 0, line_total: l.unit_cost * l.qty })) };
         invoices.push(i);

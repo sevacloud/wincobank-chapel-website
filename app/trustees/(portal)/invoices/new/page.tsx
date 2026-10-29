@@ -5,7 +5,8 @@
  * Route: /trustees/invoices/new
  *
  * Creates a sales invoice in QuickFile (e.g. room hire you've arranged),
- * creating the client first if needed, and attaches any supporting files.
+ * creating the client first if needed, and attaches the supporting files
+ * (required, so the treasurer always has evidence).
  * The invoice is not emailed automatically — the treasurer sends it.
  */
 
@@ -40,7 +41,7 @@ export default async function NewInvoicePage() {
       </PageHeading>
 
       <div className={cardClass}>
-        <SubmissionForm action={submitInvoiceAction} kind="Invoice" filesRequired={false} submitLabel="Create invoice">
+        <SubmissionForm action={submitInvoiceAction} kind="Invoice" submitLabel="Create invoice">
           <PartyPicker label="client" contacts={options.clients} />
 
           <fieldset className="grid gap-4 sm:grid-cols-2">

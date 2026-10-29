@@ -64,6 +64,7 @@ export interface DocumentRow {
   status: string;
   net: number;
   gross: number;
+  tags: string[];
 }
 
 export interface ProjectSummary {
@@ -254,7 +255,8 @@ export async function getProjectTags(): Promise<string[]> {
     .sort((a, b) => a.localeCompare(b, 'en-GB', { numeric: true, sensitivity: 'base' }));
 }
 
-export async function getInvoicesByTag(tag: string, from: string, to: string): Promise<DocumentRow[]> {
+/** Sales invoices dated in the range, newest first; optionally only those with a project tag. */
+export async function getInvoices(from: string, to: string, tag?: string): Promise<DocumentRow[]> {
   const rows = await qfGetAll<Record<string, unknown>>('invoices', {
     tag_name: tag,
     type: 'invoice',
@@ -272,10 +274,12 @@ export async function getInvoicesByTag(tag: string, from: string, to: string): P
     status: String(i.status ?? ''),
     net: Number(i.net_total ?? 0),
     gross: Number(i.gross_total ?? 0),
+    tags: Array.isArray(i.tags) ? i.tags.map(String) : [],
   }));
 }
 
-export async function getPurchasesByTag(tag: string, from: string, to: string): Promise<DocumentRow[]> {
+/** Purchases dated in the range, newest first; optionally only those with a project tag. */
+export async function getPurchases(from: string, to: string, tag?: string): Promise<DocumentRow[]> {
   const rows = await qfGetAll<Record<string, unknown>>('purchases', {
     tag_name: tag,
     date_from: from,
@@ -292,6 +296,7 @@ export async function getPurchasesByTag(tag: string, from: string, to: string): 
     status: String(p.status ?? ''),
     net: Number(p.net_total ?? 0),
     gross: Number(p.gross_total ?? 0),
+    tags: Array.isArray(p.tags) ? p.tags.map(String) : [],
   }));
 }
 
@@ -318,8 +323,8 @@ export async function getProjects(from: string, to: string): Promise<ProjectSumm
   // Sequential per tag: QuickFile asks clients to avoid large parallel bursts.
   for (const tag of tags) {
     const [invoices, purchases] = await Promise.all([
-      getInvoicesByTag(tag, from, to),
-      getPurchasesByTag(tag, from, to),
+      getInvoices(from, to, tag),
+      getPurchases(from, to, tag),
     ]);
     const income = round2(invoices.reduce((s, i) => s + i.gross, 0));
     const spend = round2(purchases.reduce((s, p) => s + p.gross, 0));
@@ -340,7 +345,7 @@ export async function getUtilities(from: string, to: string): Promise<Record<str
   const result: Record<string, Record<string, number>> = {};
   for (const tag of tags) {
     const months: Record<string, number> = {};
-    for (const p of await getPurchasesByTag(tag, from, to)) {
+    for (const p of await getPurchases(from, to, tag)) {
       const m = p.date.slice(0, 7);
       if (m) months[m] = round2((months[m] ?? 0) + p.gross);
     }

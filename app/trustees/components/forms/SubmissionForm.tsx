@@ -6,6 +6,8 @@ import { formatGBP } from '@/lib/quickfile/format';
 import { primaryButtonClass, secondaryButtonClass } from '../styles';
 import EvidenceInput from './EvidenceInput';
 import SubmittedRecord from './SubmittedRecord';
+import EvidencePreview from './EvidencePreview';
+import { InvoicePdf, SendInvoiceButton, invoicePdfUrl } from './InvoiceDelivery';
 
 const STATUS_TEXT = {
   attached: 'attached in QuickFile',
@@ -17,12 +19,12 @@ const STATUS_TEXT = {
  * Shared shell for the expense and invoice forms: submits via a server
  * action without React's automatic form reset (so a validation error keeps
  * everything the trustee typed), appends evidence files, and shows the
- * QuickFile outcome.
+ * QuickFile outcome — the record, the invoice PDF and send workflow, and a
+ * preview of the evidence.
  */
-export default function SubmissionForm({ action, kind, filesRequired, submitLabel, children }: {
+export default function SubmissionForm({ action, kind, submitLabel, children }: {
   action: (prev: SubmitState, fd: FormData) => Promise<SubmitState>;
   kind: 'Purchase' | 'Invoice';
-  filesRequired: boolean;
   submitLabel: string;
   children: React.ReactNode;
 }) {
@@ -68,6 +70,12 @@ export default function SubmissionForm({ action, kind, filesRequired, submitLabe
                 View in QuickFile
               </a>
             )}
+            {kind === 'Invoice' && (
+              <>
+                <a href={invoicePdfUrl(r.id, true)} className={`${secondaryButtonClass} bg-white`}>Download PDF</a>
+                <SendInvoiceButton id={r.id} number={r.number} />
+              </>
+            )}
             <button
               type="button"
               className={`${secondaryButtonClass} bg-white`}
@@ -79,6 +87,8 @@ export default function SubmissionForm({ action, kind, filesRequired, submitLabe
           </div>
         </div>
         {r.record && <SubmittedRecord kind={kind} number={r.number} partyName={r.partyName} record={r.record} />}
+        {kind === 'Invoice' && <InvoicePdf id={r.id} number={r.number} />}
+        <EvidencePreview files={files} />
       </>
     );
   }
@@ -89,7 +99,7 @@ export default function SubmissionForm({ action, kind, filesRequired, submitLabe
       onSubmit={(e) => {
         e.preventDefault();
         setClientError(null);
-        if (filesRequired && files.length === 0) {
+        if (files.length === 0) {
           setClientError('Attach at least one receipt or supporting document.');
           return;
         }
@@ -100,7 +110,11 @@ export default function SubmissionForm({ action, kind, filesRequired, submitLabe
       }}
     >
       {children}
-      <EvidenceInput files={files} onChange={setFiles} required={filesRequired} />
+      <EvidenceInput files={files} onChange={setFiles} label={kind === 'Purchase' ? 'Receipts & supporting evidence' : 'Supporting evidence'} />
+
+      <p className="text-sm text-blue-900 rounded-md border border-blue-200 bg-blue-50 px-4 py-3">
+        Not sure which category to use{kind === 'Purchase' ? ', or which account it should be paid from' : ''}? Please check with the treasurer before submitting.
+      </p>
 
       {(clientError || state.error) && (
         <p className="text-sm text-red-700 rounded-md border border-red-200 bg-red-50 px-4 py-3" role="alert">{clientError ?? state.error}</p>
