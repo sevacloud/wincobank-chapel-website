@@ -35,6 +35,37 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## How to add an event (for editors)
+
+Everything on the **What's On** page (`/activities`) comes from one file:
+[`content/whats-on.ts`](content/whats-on.ts). Think of it like the notice board
+in the chapel porch — you pin things up there and the website shows them.
+
+**To add a one-off event** (a fair, a meeting, a special service):
+
+1. On GitHub, open `content/whats-on.ts` and click the ✏️ pencil to edit.
+2. Find the list called `oneOffEvents`.
+3. Copy an existing line and change the details. For example:
+
+   ```ts
+   { date: '2027-03-14', start: '14:00', end: '16:30', title: 'Spring Tea Party' },
+   ```
+
+   - `date` — year-month-day, e.g. `'2027-03-14'` for 14 March 2027. **Every event needs a date.**
+   - `start` and `end` — 24-hour clock, e.g. `'14:00'` for 2pm, `'18:30'` for 6.30pm.
+   - `title` — the name people will see.
+   - You can add `description: 'A few words about it.'` if you like.
+4. Keep the events in date order, and **delete any that have already happened**.
+5. Click **Commit changes**. Ask your web person to check it on staging before it goes live.
+
+**You don't need to remove old events for them to vanish.** Once an event's end
+time has passed, the website hides it by itself (UK time). If there are no
+events coming up, the page shows a friendly "nothing planned just now" message.
+
+**To change the weekly timetable**, edit the `weeklyActivities` list in the same
+file. Each activity has a `day`, a `time` (written exactly as you want it shown,
+e.g. `'10–11am'`), a `title` and a `description`.
+
 ## Trustee Portal (QuickFile)
 
 `/trustees` is a login-gated financial dashboard for selected trustees, reading
